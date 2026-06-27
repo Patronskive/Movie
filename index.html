@@ -170,18 +170,22 @@ const H = { Authorization: 'Bearer ' + TOKEN };
 const IMG = 'https://image.tmdb.org/t/p/';
 let searchType = 'person';
 
-// Load genres on startup
-async function loadGenres() {
-  try {
-    const d = await tmdb('/genre/movie/list?language=no-NO');
-    const sel = document.getElementById('genre-select');
-    (d.genres || []).forEach(g => {
-      const o = document.createElement('option');
-      o.value = g.id;
-      o.textContent = g.name;
-      sel.appendChild(o);
-    });
-  } catch(e) {}
+function loadGenres() {
+  const genres = [
+    {id:28,name:'Action'},{id:12,name:'Eventyr'},{id:16,name:'Animasjon'},
+    {id:35,name:'Komedie'},{id:80,name:'Krim'},{id:99,name:'Dokumentar'},
+    {id:18,name:'Drama'},{id:10751,name:'Familie'},{id:14,name:'Fantasy'},
+    {id:36,name:'Historie'},{id:27,name:'Skrekk'},{id:10402,name:'Musikk'},
+    {id:9648,name:'Mysterium'},{id:10749,name:'Romantikk'},{id:878,name:'Science fiction'},
+    {id:53,name:'Thriller'},{id:10752,name:'Krig'},{id:37,name:'Western'}
+  ];
+  const sel = document.getElementById('genre-select');
+  genres.forEach(g => {
+    const o = document.createElement('option');
+    o.value = g.id;
+    o.textContent = g.name;
+    sel.appendChild(o);
+  });
 }
 
 function setType(t) {
