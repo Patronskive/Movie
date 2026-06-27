@@ -366,24 +366,6 @@ async function byDiscover(baseUrl, page, type, append) {
 
 
 
-
-  const scoreClass = 'score score-' + mediaMode;
-  const html = items.map(m => {
-    const title = getTitle(m, type);
-    const year = getYear(m, type);
-    return '<div class="card" onclick="openModal(' + m.id + ',\'' + type + '\')" title="' + title.replace(/"/g,'') + '">' +
-      (m.poster_path ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>' : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
-      '<div class="card-info"><div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
-      '<div class="card-title">' + title + '</div>' +
-      '<div class="card-year">' + year + '</div>' +
-      '<div class="card-providers" id="prov-' + m.id + '"></div></div></div>';
-  }).join('');
-  if (append) document.getElementById('results').insertAdjacentHTML('beforeend', html);
-  else document.getElementById('results').innerHTML = html;
-  fetchProvidersBatch(items, type);
-}
-
-
 function getTitle(m, type) {
   const NORDIC_EN = ['no','nb','nn','sv','da','en'];
   const origLang = m.original_language || '';
