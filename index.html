@@ -3,26 +3,32 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Filmguide</title>
+<title>Film- og serieguide</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #0d0d0d; --surface: #161616; --surface2: #1e1e1e; --border: #2a2a2a;
     --text: #f0f0ee; --text-muted: #888; --text-dim: #555;
     --accent: #e8c97a; --accent-dim: rgba(232,201,122,0.12);
+    --accent2: #7ab8e8; --accent2-dim: rgba(122,184,232,0.12);
     --radius: 10px; --font: 'Inter', system-ui, sans-serif;
   }
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
   body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; min-height: 100vh; }
-  header { padding: 2rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); max-width: 1100px; margin: 0 auto; }
+  header { padding: 2rem 1.5rem 1rem; max-width: 1100px; margin: 0 auto; }
   header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
-  header p { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
+  .media-tabs { display: flex; gap: 0; margin-top: 1rem; border-bottom: 1px solid var(--border); }
+  .media-tab { padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-muted); font-family: var(--font); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .media-tab:hover { color: var(--text); }
+  .media-tab.active-film { color: var(--accent); border-bottom-color: var(--accent); }
+  .media-tab.active-serie { color: var(--accent2); border-bottom-color: var(--accent2); }
   .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
   .search-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
-  .tabs { display: flex; gap: 6px; margin-bottom: 1rem; }
+  .tabs { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
   .tab { padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: var(--font); }
   .tab:hover { border-color: #444; color: var(--text); }
-  .tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .tab.active-film { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .tab.active-serie { background: var(--accent2-dim); border-color: var(--accent2); color: var(--accent2); }
   .search-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
   .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   input[type=text], input[type=number], select {
@@ -30,12 +36,15 @@
     border-radius: 7px; padding: 8px 12px; font-size: 14px; font-family: var(--font);
     outline: none; transition: border-color 0.15s;
   }
-  input[type=text]:focus, input[type=number]:focus, select:focus { border-color: var(--accent); }
+  .mode-film input[type=text]:focus, .mode-film input[type=number]:focus, .mode-film select:focus { border-color: var(--accent); }
+  .mode-serie input[type=text]:focus, .mode-serie input[type=number]:focus, .mode-serie select:focus { border-color: var(--accent2); }
   input[type=text] { flex: 1; min-width: 160px; }
   input[type=number] { width: 72px; }
   select { cursor: pointer; }
   .score-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
-  .btn { background: var(--accent); color: #111; border: none; border-radius: 7px; padding: 8px 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; white-space: nowrap; }
+  .btn { border: none; border-radius: 7px; padding: 8px 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; white-space: nowrap; }
+  .btn-film { background: var(--accent); color: #111; }
+  .btn-serie { background: var(--accent2); color: #111; }
   .btn:hover { opacity: 0.88; }
   .status { text-align: center; color: var(--text-muted); font-size: 14px; padding: 3rem 0; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
@@ -44,7 +53,9 @@
   .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: var(--surface2); }
   .no-poster { width: 100%; aspect-ratio: 2/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 28px; }
   .card-info { padding: 8px 9px 10px; }
-  .score { display: inline-block; background: var(--accent-dim); color: var(--accent); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .score { display: inline-block; border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .score-film { background: var(--accent-dim); color: var(--accent); }
+  .score-serie { background: var(--accent2-dim); color: var(--accent2); }
   .card-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; }
   .card-year { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
   .card-providers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 18px; }
@@ -57,7 +68,9 @@
   .modal-body { padding: 1.25rem; }
   .modal-title { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 6px; }
   .modal-scores { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-  .score-pill { background: var(--accent-dim); color: var(--accent); border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 500; }
+  .score-pill { border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 500; }
+  .score-pill-film { background: var(--accent-dim); color: var(--accent); }
+  .score-pill-serie { background: var(--accent2-dim); color: var(--accent2); }
   .score-pill.rt { background: rgba(250,100,60,0.12); color: #fa6020; }
   .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; margin-top: 14px; }
   .modal-text { font-size: 13px; color: #aaa; line-height: 1.6; }
@@ -77,14 +90,17 @@
 </head>
 <body>
 <header>
-  <h1>Filmguide</h1>
-  <p>Søk på regissør, skuespiller, filmtittel — eller bare velg sjanger og tiår</p>
+  <h1>Film- og serieguide</h1>
+  <div class="media-tabs">
+    <button class="media-tab active-film" id="mtab-film" onclick="setMedia('film')">🎬 Filmer</button>
+    <button class="media-tab" id="mtab-serie" onclick="setMedia('serie')">📺 Serier</button>
+  </div>
 </header>
-<main class="main">
+<main class="main mode-film" id="main">
   <div class="search-panel">
-    <div class="tabs">
-      <button class="tab active" id="tab-person" onclick="setType('person')">Regissør / skuespiller</button>
-      <button class="tab" id="tab-title" onclick="setType('title')">Filmtittel</button>
+    <div class="tabs" id="search-tabs">
+      <button class="tab active-film" id="tab-person" onclick="setType('person')">Regissør / skuespiller</button>
+      <button class="tab" id="tab-title" onclick="setType('title')">Tittel</button>
       <button class="tab" id="tab-discover" onclick="setType('discover')">Utforsk</button>
     </div>
     <div id="row-person" class="search-row">
@@ -113,7 +129,7 @@
     </div>
     <div class="filter-row" style="margin-top:8px">
       <span class="score-label">Min score <input type="number" id="min-score" value="7" min="0" max="10" step="0.1"/></span>
-      <button class="btn" onclick="search()">Søk</button>
+      <button class="btn btn-film" id="search-btn" onclick="search()">Søk</button>
     </div>
   </div>
   <div id="status" class="status" style="display:none"></div>
@@ -130,29 +146,61 @@ const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3ZjlmZGUwOWE3ZTU3MzAwNTU4YzgwOTQz
 const OMDB_KEY = '90c2bdc6';
 const H = { Authorization: 'Bearer ' + TOKEN };
 const IMG = 'https://image.tmdb.org/t/p/';
+let mediaMode = 'film'; // 'film' eller 'serie'
 let searchType = 'person';
 
-// Kombiner free og flatrate fra TMDB, fjern duplikater
-function getProviders(no) {
-  const free = no.free || [];
-  const flatrate = no.flatrate || [];
-  const seen = new Set();
-  return [...free, ...flatrate].filter(p => {
-    if (seen.has(p.provider_id)) return false;
-    seen.add(p.provider_id); return true;
+const FILM_GENRES = [
+  {id:28,name:'Action'},{id:12,name:'Eventyr'},{id:16,name:'Animasjon'},
+  {id:35,name:'Komedie'},{id:80,name:'Krim'},{id:99,name:'Dokumentar'},
+  {id:18,name:'Drama'},{id:10751,name:'Familie'},{id:14,name:'Fantasy'},
+  {id:36,name:'Historie'},{id:27,name:'Skrekk'},{id:10402,name:'Musikk'},
+  {id:9648,name:'Mysterium'},{id:10749,name:'Romantikk'},{id:878,name:'Science fiction'},
+  {id:53,name:'Thriller'},{id:10752,name:'Krig'},{id:37,name:'Western'}
+];
+const SERIE_GENRES = [
+  {id:10759,name:'Action & eventyr'},{id:16,name:'Animasjon'},{id:35,name:'Komedie'},
+  {id:80,name:'Krim'},{id:99,name:'Dokumentar'},{id:18,name:'Drama'},
+  {id:10751,name:'Familie'},{id:10762,name:'Barn'},{id:9648,name:'Mysterium'},
+  {id:10763,name:'Nyheter'},{id:10764,name:'Reality'},{id:10765,name:'Science fiction & fantasy'},
+  {id:10766,name:'Såpeopera'},{id:10767,name:'Talkshow'},{id:10768,name:'Krig & politikk'},
+  {id:37,name:'Western'}
+];
+
+function setMedia(mode) {
+  mediaMode = mode;
+  const isFilm = mode === 'film';
+  document.getElementById('mtab-film').className = 'media-tab' + (isFilm ? ' active-film' : '');
+  document.getElementById('mtab-serie').className = 'media-tab' + (!isFilm ? ' active-serie' : '');
+  document.getElementById('main').className = 'main mode-' + mode;
+  document.getElementById('search-btn').className = 'btn btn-' + mode;
+  // Oppdater søke-tab-stiler
+  ['tab-person','tab-title','tab-discover'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'tab' + (el.classList.contains('active-film') || el.classList.contains('active-serie')
+      ? ' active-' + mode : '');
   });
+  // Oppdater rolle-label
+  const roleSelect = document.getElementById('role-select');
+  if (isFilm) {
+    roleSelect.options[0].text = 'Regissør';
+    document.getElementById('query-person').placeholder = 'F.eks. David Fincher';
+    document.getElementById('query-title').placeholder = 'F.eks. Fight Club';
+  } else {
+    roleSelect.options[0].text = 'Skaper / showrunner';
+    document.getElementById('query-person').placeholder = 'F.eks. Vince Gilligan';
+    document.getElementById('query-title').placeholder = 'F.eks. Breaking Bad';
+  }
+  // Oppdater sjangerliste
+  loadGenres();
+  // Tøm resultater
+  document.getElementById('results').innerHTML = '';
+  showStatus('');
 }
 
 function loadGenres() {
-  const genres = [
-    {id:28,name:'Action'},{id:12,name:'Eventyr'},{id:16,name:'Animasjon'},
-    {id:35,name:'Komedie'},{id:80,name:'Krim'},{id:99,name:'Dokumentar'},
-    {id:18,name:'Drama'},{id:10751,name:'Familie'},{id:14,name:'Fantasy'},
-    {id:36,name:'Historie'},{id:27,name:'Skrekk'},{id:10402,name:'Musikk'},
-    {id:9648,name:'Mysterium'},{id:10749,name:'Romantikk'},{id:878,name:'Science fiction'},
-    {id:53,name:'Thriller'},{id:10752,name:'Krig'},{id:37,name:'Western'}
-  ];
+  const genres = mediaMode === 'film' ? FILM_GENRES : SERIE_GENRES;
   const sel = document.getElementById('genre-select');
+  sel.innerHTML = '<option value="">Alle sjangere</option>';
   genres.forEach(g => {
     const o = document.createElement('option');
     o.value = g.id; o.textContent = g.name; sel.appendChild(o);
@@ -162,8 +210,10 @@ function loadGenres() {
 function setType(t) {
   searchType = t;
   ['person','title','discover'].forEach(x => {
-    document.getElementById('tab-' + x).classList.toggle('active', x === t);
-    document.getElementById('row-' + x).style.display = x === t ? '' : 'none';
+    const tab = document.getElementById('tab-' + x);
+    const isActive = x === t;
+    tab.className = 'tab' + (isActive ? ' active-' + mediaMode : '');
+    document.getElementById('row-' + x).style.display = isActive ? '' : 'none';
   });
 }
 
@@ -178,75 +228,108 @@ function showStatus(msg) {
   el.style.display = msg ? 'block' : 'none';
 }
 
+function getProviders(no) {
+  const free = no.free || [];
+  const flatrate = no.flatrate || [];
+  const seen = new Set();
+  return [...free, ...flatrate].filter(p => {
+    if (seen.has(p.provider_id)) return false;
+    seen.add(p.provider_id); return true;
+  });
+}
+
 async function search() {
   const minScore = parseFloat(document.getElementById('min-score').value) || 0;
   document.getElementById('results').innerHTML = '';
   showStatus('Søker...');
+  const type = mediaMode === 'film' ? 'movie' : 'tv';
   try {
     if (searchType === 'person') {
       const q = document.getElementById('query-person').value.trim();
       if (!q) { showStatus('Skriv inn et navn.'); return; }
-      await byPerson(q, document.getElementById('role-select').value, minScore);
+      await byPerson(q, document.getElementById('role-select').value, minScore, type);
     } else if (searchType === 'title') {
       const q = document.getElementById('query-title').value.trim();
-      if (!q) { showStatus('Skriv inn en filmtittel.'); return; }
-      await byTitle(q, minScore);
+      if (!q) { showStatus('Skriv inn en tittel.'); return; }
+      await byTitle(q, minScore, type);
     } else {
-      await byDiscover(minScore);
+      await byDiscover(minScore, type);
     }
   } catch(e) { showStatus('Feil: ' + e.message); }
 }
 
-async function byPerson(name, role, minScore) {
+async function byPerson(name, role, minScore, type) {
   const d = await tmdb('/search/person?query=' + encodeURIComponent(name) + '&language=no-NO');
   if (!d.results || !d.results.length) { showStatus('Ingen person funnet.'); return; }
   const person = d.results[0];
-  const cd = await tmdb('/person/' + person.id + '/movie_credits?language=no-NO');
-  const list = role === 'directing'
-    ? (cd.crew || []).filter(x => x.job === 'Director')
-    : (cd.cast || []);
+  const cd = await tmdb('/person/' + person.id + '/' + type + '_credits?language=no-NO');
+  let list;
+  if (type === 'movie') {
+    list = role === 'directing'
+      ? (cd.crew || []).filter(x => x.job === 'Director')
+      : (cd.cast || []);
+  } else {
+    // For serier: directing = created_by finnes ikke i credits, bruk crew med Creator/Executive Producer
+    list = role === 'directing'
+      ? (cd.crew || []).filter(x => ['Creator','Executive Producer','Series Director'].includes(x.job))
+      : (cd.cast || []);
+    if (role === 'directing' && !list.length) list = cd.crew || [];
+  }
   const filtered = list
-    .filter(m => m.vote_average >= minScore && m.vote_count > 50)
+    .filter(m => m.vote_average >= minScore && m.vote_count > 20)
     .sort((a, b) => b.vote_average - a.vote_average);
   showStatus('');
-  if (!filtered.length) { showStatus('Ingen filmer over ' + minScore + ' for ' + person.name + '.'); return; }
-  render(filtered.slice(0, 40));
+  if (!filtered.length) { showStatus('Ingen resultater over ' + minScore + ' for ' + person.name + '.'); return; }
+  render(filtered.slice(0, 40), type);
 }
 
-async function byTitle(title, minScore) {
-  const d = await tmdb('/search/movie?query=' + encodeURIComponent(title) + '&language=no-NO');
+async function byTitle(title, minScore, type) {
+  const d = await tmdb('/search/' + type + '?query=' + encodeURIComponent(title) + '&language=no-NO');
   const filtered = (d.results || []).filter(m => m.vote_average >= minScore);
   showStatus('');
-  if (!filtered.length) { showStatus('Ingen filmer funnet.'); return; }
-  render(filtered);
+  if (!filtered.length) { showStatus('Ingen resultater funnet.'); return; }
+  render(filtered, type);
 }
 
-async function byDiscover(minScore) {
+async function byDiscover(minScore, type) {
   const genre = document.getElementById('genre-select').value;
   const decade = document.getElementById('decade-select').value;
-  let url = '/discover/movie?language=no-NO&sort_by=vote_average.desc&vote_count.gte=200&vote_average.gte=' + minScore;
+  const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
+  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=100&vote_average.gte=' + minScore;
   if (genre) url += '&with_genres=' + genre;
-  if (decade) url += '&primary_release_date.gte=' + decade + '-01-01&primary_release_date.lte=' + (parseInt(decade)+9) + '-12-31';
+  if (decade) url += '&' + dateField + '.gte=' + decade + '-01-01&' + dateField + '.lte=' + (parseInt(decade)+9) + '-12-31';
   const d = await tmdb(url);
   showStatus('');
-  if (!d.results || !d.results.length) { showStatus('Ingen filmer funnet.'); return; }
-  render(d.results.slice(0, 40));
+  if (!d.results || !d.results.length) { showStatus('Ingen resultater funnet.'); return; }
+  render(d.results.slice(0, 40), type);
 }
 
-function render(movies) {
-  document.getElementById('results').innerHTML = movies.map(m =>
-    '<div class="card" onclick="openModal(' + m.id + ')" title="' + m.title.replace(/"/g,'') + '">' +
-    (m.poster_path
-      ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>'
-      : '<div class="no-poster">🎬</div>') +
-    '<div class="card-info">' +
-    '<div class="score">★ ' + m.vote_average.toFixed(1) + '</div>' +
-    '<div class="card-title">' + m.title + '</div>' +
-    '<div class="card-year">' + (m.release_date ? m.release_date.slice(0,4) : '—') + '</div>' +
-    '<div class="card-providers" id="prov-' + m.id + '"></div>' +
-    '</div></div>'
-  ).join('');
-  fetchProvidersBatch(movies);
+function getTitle(item, type) {
+  return type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
+}
+
+function getYear(item, type) {
+  const date = type === 'movie' ? item.release_date : item.first_air_date;
+  return date ? date.slice(0,4) : '—';
+}
+
+function render(items, type) {
+  const scoreClass = 'score score-' + mediaMode;
+  document.getElementById('results').innerHTML = items.map(m => {
+    const title = getTitle(m, type);
+    const year = getYear(m, type);
+    return '<div class="card" onclick="openModal(' + m.id + ',\'' + type + '\')" title="' + title.replace(/"/g,'') + '">' +
+      (m.poster_path
+        ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>'
+        : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
+      '<div class="card-info">' +
+      '<div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
+      '<div class="card-title">' + title + '</div>' +
+      '<div class="card-year">' + year + '</div>' +
+      '<div class="card-providers" id="prov-' + m.id + '"></div>' +
+      '</div></div>';
+  }).join('');
+  fetchProvidersBatch(items, type);
 }
 
 function providerLogoHtml(p) {
@@ -255,46 +338,70 @@ function providerLogoHtml(p) {
     : '<span style="font-size:10px;color:var(--text-dim)">' + p.provider_name + '</span>';
 }
 
-async function fetchProvidersBatch(movies) {
-  for (const m of movies) {
+async function fetchProvidersBatch(items, type) {
+  for (const m of items) {
     try {
-      const wp = await tmdb('/movie/' + m.id + '/watch/providers');
+      const wp = await tmdb('/' + type + '/' + m.id + '/watch/providers');
       const no = (wp.results && wp.results.NO) || {};
       const providers = getProviders(no);
       const el = document.getElementById('prov-' + m.id);
       if (!el) continue;
-      const html = providers.slice(0, 5).map(providerLogoHtml).join('');
+      const html = providers.slice(0,5).map(providerLogoHtml).join('');
       if (html) el.innerHTML = html;
     } catch(e) {}
   }
 }
 
-async function openModal(id) {
+async function openModal(id, type) {
   document.getElementById('overlay').classList.add('open');
   document.getElementById('modal-inner').innerHTML = '<div style="padding:3rem;text-align:center;color:#555">Laster...</div>';
   const [m, wp, cr] = await Promise.all([
-    tmdb('/movie/' + id + '?language=no-NO'),
-    tmdb('/movie/' + id + '/watch/providers'),
-    tmdb('/movie/' + id + '/credits?language=no-NO'),
+    tmdb('/' + type + '/' + id + '?language=no-NO'),
+    tmdb('/' + type + '/' + id + '/watch/providers'),
+    tmdb('/' + type + '/' + id + '/credits?language=no-NO'),
   ]);
   const no = (wp.results && wp.results.NO) || {};
   const free = no.free || [];
   const flatrate = no.flatrate || [];
   const rent = no.rent || [];
-  const director = (cr.crew || []).find(x => x.job === 'Director');
+
+  const title = type === 'movie' ? m.title : m.name;
+  const year = type === 'movie'
+    ? (m.release_date ? m.release_date.slice(0,4) : '')
+    : (m.first_air_date ? m.first_air_date.slice(0,4) : '');
+
+  // Ekstra info avhengig av type
+  let extraInfo = '';
+  if (type === 'movie') {
+    const director = (cr.crew || []).find(x => x.job === 'Director');
+    if (director) extraInfo += '<div class="section-label">Regissør</div><div class="modal-text">' + director.name + '</div>';
+    if (m.runtime) extraInfo += '<div class="section-label">Spilletid</div><div class="modal-text">' + Math.floor(m.runtime/60) + 't ' + (m.runtime%60) + 'min</div>';
+  } else {
+    const creators = (m.created_by || []).map(x => x.name).join(', ');
+    if (creators) extraInfo += '<div class="section-label">Skaper</div><div class="modal-text">' + creators + '</div>';
+    const seasons = m.number_of_seasons;
+    const episodes = m.number_of_episodes;
+    if (seasons) extraInfo += '<div class="section-label">Sesonger</div><div class="modal-text">' + seasons + ' sesong' + (seasons > 1 ? 'er' : '') + (episodes ? ' · ' + episodes + ' episoder' : '') + '</div>';
+    const status = m.status === 'Ended' ? 'Avsluttet' : m.status === 'Returning Series' ? 'Pågående' : m.status || '';
+    if (status) extraInfo += ' <span style="font-size:11px;color:var(--text-dim)">(' + status + ')</span>';
+  }
+
   const cast = (cr.cast || []).slice(0,5).map(x => x.name).join(', ');
   const genres = (m.genres || []).map(g => g.name).join(', ');
-  const runtime = m.runtime ? Math.floor(m.runtime/60) + 't ' + (m.runtime%60) + 'min' : '';
 
+  // IMDb via OMDb
   let imdbRating = null, rtRating = null;
-  if (m.imdb_id) {
+  const imdbId = m.imdb_id || (m.external_ids && m.external_ids.imdb_id);
+  if (imdbId) {
     try {
-      const od = await fetch('https://www.omdbapi.com/?i=' + m.imdb_id + '&apikey=' + OMDB_KEY).then(r => r.json());
+      const od = await fetch('https://www.omdbapi.com/?i=' + imdbId + '&apikey=' + OMDB_KEY).then(r => r.json());
       if (od.imdbRating && od.imdbRating !== 'N/A') imdbRating = od.imdbRating;
       const rt = (od.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
       if (rt) rtRating = rt.Value;
     } catch(e) {}
   }
+
+  const pillClass = 'score-pill score-pill-' + mediaMode;
 
   function providerBlock(p, label) {
     return '<div class="provider">' +
@@ -304,7 +411,6 @@ async function openModal(id) {
       '</div>';
   }
 
-  // Bygg provider-seksjon med kategorier
   let providersHtml = '';
   if (free.length) providersHtml += free.map(p => providerBlock(p, 'Gratis')).join('');
   if (flatrate.length) {
@@ -318,15 +424,15 @@ async function openModal(id) {
       ? '<img src="' + IMG + 'w780' + m.backdrop_path + '" class="modal-poster" alt=""/>'
       : m.poster_path ? '<img src="' + IMG + 'w500' + m.poster_path + '" class="modal-poster" alt=""/>' : '') +
     '<div class="modal-body">' +
-    '<div class="modal-title">' + m.title + (m.release_date ? ' <span style="font-weight:400;color:#666">(' + m.release_date.slice(0,4) + ')</span>' : '') + '</div>' +
+    '<div class="modal-title">' + title + (year ? ' <span style="font-weight:400;color:#666">(' + year + ')</span>' : '') + '</div>' +
     '<div class="modal-scores">' +
-    (imdbRating ? '<span class="score-pill">★ ' + imdbRating + ' IMDb</span>' : '') +
+    (imdbRating ? '<span class="' + pillClass + '">★ ' + imdbRating + ' IMDb</span>' : '') +
     (rtRating ? '<span class="score-pill rt">🍅 ' + rtRating + '</span>' : '') +
-    '<span class="score-pill" style="opacity:0.6">TMDB ' + m.vote_average.toFixed(1) + '</span>' +
+    '<span class="' + pillClass + '" style="opacity:0.6">TMDB ' + m.vote_average.toFixed(1) + '</span>' +
     '</div>' +
-    (director ? '<div class="section-label">Regissør</div><div class="modal-text">' + director.name + '</div>' : '') +
+    extraInfo +
     (cast ? '<div class="section-label">Skuespillere</div><div class="modal-text">' + cast + '</div>' : '') +
-    (genres ? '<div class="section-label">Sjanger</div><div class="modal-text">' + genres + (runtime ? ' · ' + runtime : '') + '</div>' : '') +
+    (genres ? '<div class="section-label">Sjanger</div><div class="modal-text">' + genres + '</div>' : '') +
     (m.overview ? '<div class="section-label">Handling</div><div class="modal-text">' + m.overview + '</div>' : '') +
     '<div class="section-label">Tilgjengelig i Norge</div>' +
     (providersHtml
