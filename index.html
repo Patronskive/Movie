@@ -173,7 +173,7 @@ let currentDiscoverUrl = '';
 let currentType = 'movie';
 
 const LANGUAGES = [
-  {code:'no',name:'Norsk'},{code:'sv',name:'Svensk'},{code:'da',name:'Dansk'},
+  {code:'no|nb|nn',name:'Norsk'},{code:'sv',name:'Svensk'},{code:'da',name:'Dansk'},
   {code:'fi',name:'Finsk'},{code:'is',name:'Islandsk'},{code:'en',name:'Engelsk'},
   {code:'de',name:'Tysk'},{code:'fr',name:'Fransk'},{code:'es',name:'Spansk'},
   {code:'it',name:'Italiensk'},{code:'ja',name:'Japansk'},{code:'ko',name:'Koreansk'},
@@ -284,10 +284,15 @@ function buildDiscoverUrl(minScore, type) {
   const genre = document.getElementById('genre-select').value;
   const decade = document.getElementById('decade-select').value;
   const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=10&vote_average.gte=' + minScore;
+  // Lav terskel for nordiske språk, høyere for resten
+  const NORDIC = ['no','nb','nn','sv','da','fi','is'];
+  const langs = Array.from(activeLangs);
+  const allNordic = langs.length > 0 && langs.every(l => NORDIC.some(n => l.includes(n)));
+  const voteMin = (langs.length === 0 || !allNordic) ? 200 : 10;
+  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=' + voteMin + '&vote_average.gte=' + minScore;
   if (genre) url += '&with_genres=' + genre;
   if (decade) url += '&' + dateField + '.gte=' + decade + '-01-01&' + dateField + '.lte=' + (parseInt(decade)+9) + '-12-31';
-  if (activeLangs.size > 0) url += '&with_original_language=' + Array.from(activeLangs).join('|');
+  if (langs.length > 0) url += '&with_original_language=' + langs.join('|');
   return url;
 }
 
