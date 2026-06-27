@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Filmguide</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --text: #f0f0ee;
+    --text-muted: #888;
+    --text-dim: #555;
+    --accent: #e8c97a;
+    --accent-dim: rgba(232,201,122,0.12);
+    --radius: 10px;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 2rem 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text);
+  }
+
+  header p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+  .search-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 1rem;
+  }
+
+  .tab {
+    padding: 5px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font);
+  }
+
+  .tab:hover { border-color: #444; color: var(--text); }
+  .tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+  .search-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  input[type=text], input[type=number], select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 7px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type=text]:focus, input[type=number]:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  input[type=text] { flex: 1; min-width: 160px; }
+  input[type=number] { width: 72px; }
+  select { cursor: pointer; }
+
+  .score-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn {
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { opacity: 0.88; }
+
+  .status {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 3rem 0;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .card:hover { border-color: #444; transform: translateY(-2px); }
+
+  .card img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    display: block;
+    background: var(--surface2);
+  }
+
+  .no-poster {
+    width: 100%;
+    aspect-ratio: 2/3;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-size: 28px;
+  }
+
+  .card-info { padding: 8px 9px 10px; }
+
+  .score {
+    display: inline-block;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .card-year { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    font-family: var(--font);
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-poster {
+    width: 100%;
+    max-height: 340px;
+    object-fit: cover;
+    object-position: center 20%;
+    border-radius: 14px 14px 0 0;
+    display: block;
+  }
+
+  .modal-body { padding: 1.25rem; }
+
+  .modal-title {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+
+  .modal-scores {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .score-pill {
+    background: var(--accent-dim);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .score-pill.rt {
+    background: rgba(250,100,60,0.12);
+    color: #fa6020;
+  }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 5px;
+    margin-top: 14px;
+  }
+
+  .modal-text {
+    font-size: 13px;
+    color: #aaa;
+    line-height: 1.6;
+  }
+
+  .providers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 5px;
+  }
+
+  .provider {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 12px;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .provider img {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+  }
+
+  .justwatch-link {
+    display: inline-block;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    opacity: 0.8;
+  }
+
+  .justwatch-link:hover { opacity: 1; }
+
+  .no-providers {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  @media (max-width: 480px) {
+    .search-row { flex-direction: column; align-items: stretch; }
+    .btn { width: 100%; }
+    .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Filmguide</h1>
+  <p>Søk på regissør, skuespiller eller filmtittel — se score og hvor du kan streame</p>
+</header>
+
+<main class="main">
+  <div class="search-panel">
+    <div class="tabs">
+      <button class="tab active" id="tab-person" onclick="setType('person')">Regissør / skuespiller</button>
+      <button class="tab" id="tab-title" onclick="setType('title')">Filmtittel</button>
+    </div>
+    <div class="search-row">
+      <input type="text" id="query" placeholder="F.eks. David Fincher" autocomplete="off"/>
+      <select id="role-select">
+        <option value="directing">Regissør</option>
+        <option value="acting">Skuespiller</option>
+      </select>
+      <span class="score-label">
+        Min score
+        <input type="number" id="min-score" value="7" min="0" max="10" step="0.1"/>
+      </span>
+      <button class="btn" onclick="search()">Søk</button>
+    </div>
+  </div>
+
+  <div id="status" class="status" style="display:none"></div>
+  <div class="grid" id="results"></div>
+</main>
+
+<div class="modal-overlay" id="overlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-inner"></div>
+  </div>
+</div>
+
+<script>
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3ZjlmZGUwOWE3ZTU3MzAwNTU4YzgwOTQzZjgxNGJkNiIsIm5iZiI6MTc4MjU1Nzg1Mi40MDQsInN1YiI6IjZhM2ZhYzljNWE5NWU2MWY3NGIwODU4YyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.hb2uEVAyNDiKfL2Ph4XEF3Y3az-ISIIEyZ3hx8IHZ3o';
+const OMDB_KEY = '90c2bdc6';
+const H = { Authorization: 'Bearer ' + TOKEN };
+const IMG = 'https://image.tmdb.org/t/p/';
+let searchType = 'person';
+
+function setType(t) {
+  searchType = t;
+  document.getElementById('tab-person').classList.toggle('active', t === 'person');
+  document.getElementById('tab-title').classList.toggle('active', t === 'title');
+  document.getElementById('role-select').style.display = t === 'person' ? '' : 'none';
+  document.getElementById('query').placeholder = t === 'person' ? 'F.eks. David Fincher' : 'F.eks. Fight Club';
+}
+
+async function tmdb(path) {
+  const r = await fetch('https://api.themoviedb.org/3' + path, { headers: H });
+  return r.json();
+}
+
+function showStatus(msg) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+async function search() {
+  const q = document.getElementById('query').value.trim();
+  const minScore = parseFloat(document.getElementById('min-score').value) || 0;
+  if (!q) return;
+  document.getElementById('results').innerHTML = '';
+  showStatus('Søker...');
+  try {
+    if (searchType === 'person') {
+      const role = document.getElementById('role-select').value;
+      await byPerson(q, role, minScore);
+    } else {
+      await byTitle(q, minScore);
+    }
+  } catch(e) {
+    showStatus('Feil: ' + e.message);
+  }
+}
+
+async function byPerson(name, role, minScore) {
+  const d = await tmdb(`/search/person?query=${encodeURIComponent(name)}&language=no-NO`);
+  if (!d.results || !d.results.length) { showStatus('Ingen person funnet.'); return; }
+  const person = d.results[0];
+  const cd = await tmdb(`/person/${person.id}/movie_credits?language=no-NO`);
+  const list = role === 'directing'
+    ? (cd.crew || []).filter(x => x.job === 'Director')
+    : (cd.cast || []);
+  const filtered = list
+    .filter(m => m.vote_average >= minScore && m.vote_count > 50)
+    .sort((a, b) => b.vote_average - a.vote_average);
+  showStatus('');
+  if (!filtered.length) { showStatus(`Ingen filmer over ${minScore} for ${person.name}.`); return; }
+  render(filtered.slice(0, 40));
+}
+
+async function byTitle(title, minScore) {
+  const d = await tmdb(`/search/movie?query=${encodeURIComponent(title)}&language=no-NO`);
+  const filtered = (d.results || []).filter(m => m.vote_average >= minScore);
+  showStatus('');
+  if (!filtered.length) { showStatus('Ingen filmer funnet.'); return; }
+  render(filtered);
+}
+
+function render(movies) {
+  document.getElementById('results').innerHTML = movies.map(m => `
+    <div class="card" onclick="openModal(${m.id})" title="${m.title}">
+      ${m.poster_path
+        ? `<img src="${IMG}w300${m.poster_path}" alt="${m.title}" loading="lazy"/>`
+        : `<div class="no-poster">🎬</div>`}
+      <div class="card-info">
+        <div class="score">★ ${m.vote_average.toFixed(1)}</div>
+        <div class="card-title">${m.title}</div>
+        <div class="card-year">${m.release_date ? m.release_date.slice(0,4) : '—'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openModal(id) {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('modal-inner').innerHTML = '<div style="padding:3rem;text-align:center;color:#555">Laster...</div>';
+  const [m, wp, cr] = await Promise.all([
+    tmdb(`/movie/${id}?language=no-NO`),
+    tmdb(`/movie/${id}/watch/providers`),
+    tmdb(`/movie/${id}/credits?language=no-NO`),
+  ]);
+  const no = wp.results && wp.results.NO ? wp.results.NO : {};
+  const flatrate = no.flatrate || [];
+  const director = (cr.crew || []).find(x => x.job === 'Director');
+  const cast = (cr.cast || []).slice(0,5).map(x => x.name).join(', ');
+  const genres = (m.genres || []).map(g => g.name).join(', ');
+  const runtime = m.runtime ? `${Math.floor(m.runtime/60)}t ${m.runtime%60}min` : '';
+
+  let imdbRating = null;
+  let rtRating = null;
+  if (m.imdb_id) {
+    try {
+      const or = await fetch(`https://www.omdbapi.com/?i=${m.imdb_id}&apikey=${OMDB_KEY}`);
+      const od = await or.json();
+      if (od.imdbRating && od.imdbRating !== 'N/A') imdbRating = od.imdbRating;
+      const rt = (od.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
+      if (rt) rtRating = rt.Value;
+    } catch(e) {}
+  }
+
+  document.getElementById('modal-inner').innerHTML = `
+    ${m.backdrop_path
+      ? `<img src="${IMG}w780${m.backdrop_path}" class="modal-poster" alt="${m.title}"/>`
+      : m.poster_path
+        ? `<img src="${IMG}w500${m.poster_path}" class="modal-poster" alt="${m.title}"/>`
+        : ''}
+    <div class="modal-body">
+      <div class="modal-title">${m.title}${m.release_date ? ' <span style="font-weight:400;color:#666">(' + m.release_date.slice(0,4) + ')</span>' : ''}</div>
+      <div class="modal-scores">
+        ${imdbRating ? `<span class="score-pill">★ ${imdbRating} IMDb</span>` : ''}
+        ${rtRating ? `<span class="score-pill rt">🍅 ${rtRating}</span>` : ''}
+        <span class="score-pill" style="opacity:0.6">TMDB ${m.vote_average.toFixed(1)}</span>
+      </div>
+      ${director ? `<div class="section-label">Regissør</div><div class="modal-text">${director.name}</div>` : ''}
+      ${cast ? `<div class="section-label">Skuespillere</div><div class="modal-text">${cast}</div>` : ''}
+      ${genres ? `<div class="section-label">Sjanger</div><div class="modal-text">${genres}${runtime ? ' · ' + runtime : ''}</div>` : ''}
+      ${m.overview ? `<div class="section-label">Handling</div><div class="modal-text">${m.overview}</div>` : ''}
+      <div class="section-label">Tilgjengelig i Norge</div>
+      ${flatrate.length
+        ? `<div class="providers">${flatrate.map(p => `
+            <div class="provider">
+              ${p.logo_path ? `<img src="${IMG}w45${p.logo_path}" alt="${p.provider_name}"/>` : ''}
+              ${p.provider_name}
+            </div>`).join('')}
+          </div>`
+        : `<div class="no-providers">Ikke funnet på norske strømmetjenester</div>`}
+      ${no.link ? `<a href="${no.link}" target="_blank" rel="noopener" class="justwatch-link">Se alle tilbud på JustWatch →</a>` : ''}
+    </div>
+  `;
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('overlay')) closeModal();
+}
+
+document.getElementById('query').addEventListener('keydown', e => {
+  if (e.key === 'Enter') search();
+});
+
+setType('person');
+</script>
+</body>
+</html>
