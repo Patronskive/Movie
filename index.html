@@ -30,7 +30,7 @@
   .tab.active-film { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
   .tab.active-serie { background: var(--accent2-dim); border-color: var(--accent2); color: var(--accent2); }
   .search-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
-  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
   input[type=text], input[type=number], select {
     background: var(--surface2); border: 1px solid var(--border); color: var(--text);
     border-radius: 7px; padding: 8px 12px; font-size: 14px; font-family: var(--font);
@@ -46,6 +46,16 @@
   .btn-film { background: var(--accent); color: #111; }
   .btn-serie { background: var(--accent2); color: #111; }
   .btn:hover { opacity: 0.88; }
+
+  /* Språk-filter */
+  .lang-section { margin-bottom: 8px; }
+  .lang-search { width: 100%; margin-bottom: 6px; font-size: 13px; padding: 6px 10px; }
+  .lang-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .lang-chip { padding: 3px 10px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12px; cursor: pointer; font-family: var(--font); transition: all 0.15s; }
+  .lang-chip:hover { border-color: #555; color: var(--text); }
+  .lang-chip.active-film { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .lang-chip.active-serie { background: var(--accent2-dim); border-color: var(--accent2); color: var(--accent2); }
+
   .status { text-align: center; color: var(--text-muted); font-size: 14px; padding: 3rem 0; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
@@ -103,6 +113,8 @@
       <button class="tab" id="tab-title" onclick="setType('title')">Tittel</button>
       <button class="tab" id="tab-discover" onclick="setType('discover')">Utforsk</button>
     </div>
+
+    <!-- Person-rad -->
     <div id="row-person" class="search-row">
       <input type="text" id="query-person" placeholder="F.eks. David Fincher" autocomplete="off"/>
       <select id="role-select">
@@ -110,24 +122,36 @@
         <option value="acting">Skuespiller</option>
       </select>
     </div>
+
+    <!-- Tittel-rad -->
     <div id="row-title" class="search-row" style="display:none">
       <input type="text" id="query-title" placeholder="F.eks. Fight Club" autocomplete="off"/>
     </div>
-    <div id="row-discover" class="filter-row" style="display:none">
-      <select id="genre-select"><option value="">Alle sjangere</option></select>
-      <select id="decade-select">
-        <option value="">Alle tiår</option>
-        <option value="1950">1950-tallet</option>
-        <option value="1960">1960-tallet</option>
-        <option value="1970">1970-tallet</option>
-        <option value="1980">1980-tallet</option>
-        <option value="1990">1990-tallet</option>
-        <option value="2000">2000-tallet</option>
-        <option value="2010">2010-tallet</option>
-        <option value="2020">2020-tallet</option>
-      </select>
+
+    <!-- Utforsk-rad -->
+    <div id="row-discover" style="display:none">
+      <div class="filter-row">
+        <select id="genre-select"><option value="">Alle sjangere</option></select>
+        <select id="decade-select">
+          <option value="">Alle tiår</option>
+          <option value="1950">1950-tallet</option>
+          <option value="1960">1960-tallet</option>
+          <option value="1970">1970-tallet</option>
+          <option value="1980">1980-tallet</option>
+          <option value="1990">1990-tallet</option>
+          <option value="2000">2000-tallet</option>
+          <option value="2010">2010-tallet</option>
+          <option value="2020">2020-tallet</option>
+        </select>
+      </div>
+      <!-- Språkfilter -->
+      <div class="lang-section">
+        <input type="text" class="lang-search" id="lang-search" placeholder="Filtrer språk..." oninput="filterLangs(this.value)" autocomplete="off"/>
+        <div class="lang-chips" id="lang-chips"></div>
+      </div>
     </div>
-    <div class="filter-row" style="margin-top:8px">
+
+    <div class="filter-row">
       <span class="score-label">Min score <input type="number" id="min-score" value="7" min="0" max="10" step="0.1"/></span>
       <button class="btn btn-film" id="search-btn" onclick="search()">Søk</button>
     </div>
@@ -146,8 +170,19 @@ const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI3ZjlmZGUwOWE3ZTU3MzAwNTU4YzgwOTQz
 const OMDB_KEY = '90c2bdc6';
 const H = { Authorization: 'Bearer ' + TOKEN };
 const IMG = 'https://image.tmdb.org/t/p/';
-let mediaMode = 'film'; // 'film' eller 'serie'
+let mediaMode = 'film';
 let searchType = 'person';
+let activeLangs = new Set();
+
+const LANGUAGES = [
+  {code:'no',name:'Norsk'},{code:'sv',name:'Svensk'},{code:'da',name:'Dansk'},
+  {code:'fi',name:'Finsk'},{code:'is',name:'Islandsk'},{code:'en',name:'Engelsk'},
+  {code:'de',name:'Tysk'},{code:'fr',name:'Fransk'},{code:'es',name:'Spansk'},
+  {code:'it',name:'Italiensk'},{code:'ja',name:'Japansk'},{code:'ko',name:'Koreansk'},
+  {code:'zh',name:'Mandarin'},{code:'hi',name:'Hindi'},{code:'ar',name:'Arabisk'},
+  {code:'pt',name:'Portugisisk'},{code:'ru',name:'Russisk'},{code:'nl',name:'Nederlandsk'},
+  {code:'pl',name:'Polsk'},{code:'tr',name:'Tyrkisk'}
+];
 
 const FILM_GENRES = [
   {id:28,name:'Action'},{id:12,name:'Eventyr'},{id:16,name:'Animasjon'},
@@ -161,40 +196,26 @@ const SERIE_GENRES = [
   {id:10759,name:'Action & eventyr'},{id:16,name:'Animasjon'},{id:35,name:'Komedie'},
   {id:80,name:'Krim'},{id:99,name:'Dokumentar'},{id:18,name:'Drama'},
   {id:10751,name:'Familie'},{id:10762,name:'Barn'},{id:9648,name:'Mysterium'},
-  {id:10763,name:'Nyheter'},{id:10764,name:'Reality'},{id:10765,name:'Science fiction & fantasy'},
-  {id:10766,name:'Såpeopera'},{id:10767,name:'Talkshow'},{id:10768,name:'Krig & politikk'},
-  {id:37,name:'Western'}
+  {id:10765,name:'Science fiction & fantasy'},{id:53,name:'Thriller'},
+  {id:10768,name:'Krig & politikk'},{id:37,name:'Western'}
 ];
 
-function setMedia(mode) {
-  mediaMode = mode;
-  const isFilm = mode === 'film';
-  document.getElementById('mtab-film').className = 'media-tab' + (isFilm ? ' active-film' : '');
-  document.getElementById('mtab-serie').className = 'media-tab' + (!isFilm ? ' active-serie' : '');
-  document.getElementById('main').className = 'main mode-' + mode;
-  document.getElementById('search-btn').className = 'btn btn-' + mode;
-  // Oppdater søke-tab-stiler
-  ['tab-person','tab-title','tab-discover'].forEach(id => {
-    const el = document.getElementById(id);
-    el.className = 'tab' + (el.classList.contains('active-film') || el.classList.contains('active-serie')
-      ? ' active-' + mode : '');
-  });
-  // Oppdater rolle-label
-  const roleSelect = document.getElementById('role-select');
-  if (isFilm) {
-    roleSelect.options[0].text = 'Regissør';
-    document.getElementById('query-person').placeholder = 'F.eks. David Fincher';
-    document.getElementById('query-title').placeholder = 'F.eks. Fight Club';
-  } else {
-    roleSelect.options[0].text = 'Skaper / showrunner';
-    document.getElementById('query-person').placeholder = 'F.eks. Vince Gilligan';
-    document.getElementById('query-title').placeholder = 'F.eks. Breaking Bad';
-  }
-  // Oppdater sjangerliste
-  loadGenres();
-  // Tøm resultater
-  document.getElementById('results').innerHTML = '';
-  showStatus('');
+function renderLangChips(filter) {
+  const container = document.getElementById('lang-chips');
+  const f = (filter || '').toLowerCase();
+  const visible = LANGUAGES.filter(l => !f || l.name.toLowerCase().includes(f));
+  container.innerHTML = visible.map(l =>
+    '<button class="lang-chip' + (activeLangs.has(l.code) ? ' active-' + mediaMode : '') + '" ' +
+    'onclick="toggleLang(\'' + l.code + '\')">' + l.name + '</button>'
+  ).join('');
+}
+
+function filterLangs(val) { renderLangChips(val); }
+
+function toggleLang(code) {
+  if (activeLangs.has(code)) activeLangs.delete(code);
+  else activeLangs.add(code);
+  renderLangChips(document.getElementById('lang-search').value);
 }
 
 function loadGenres() {
@@ -207,13 +228,42 @@ function loadGenres() {
   });
 }
 
+function setMedia(mode) {
+  mediaMode = mode;
+  const isFilm = mode === 'film';
+  document.getElementById('mtab-film').className = 'media-tab' + (isFilm ? ' active-film' : '');
+  document.getElementById('mtab-serie').className = 'media-tab' + (!isFilm ? ' active-serie' : '');
+  document.getElementById('main').className = 'main mode-' + mode;
+  document.getElementById('search-btn').className = 'btn btn-' + mode;
+  ['tab-person','tab-title','tab-discover'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.classList.contains('active-film') || el.classList.contains('active-serie')) {
+      el.className = 'tab active-' + mode;
+    }
+  });
+  if (isFilm) {
+    document.getElementById('role-select').options[0].text = 'Regissør';
+    document.getElementById('query-person').placeholder = 'F.eks. David Fincher';
+    document.getElementById('query-title').placeholder = 'F.eks. Fight Club';
+  } else {
+    document.getElementById('role-select').options[0].text = 'Skaper / showrunner';
+    document.getElementById('query-person').placeholder = 'F.eks. Vince Gilligan';
+    document.getElementById('query-title').placeholder = 'F.eks. Breaking Bad';
+  }
+  activeLangs.clear();
+  loadGenres();
+  renderLangChips('');
+  document.getElementById('lang-search').value = '';
+  document.getElementById('results').innerHTML = '';
+  showStatus('');
+}
+
 function setType(t) {
   searchType = t;
   ['person','title','discover'].forEach(x => {
     const tab = document.getElementById('tab-' + x);
-    const isActive = x === t;
-    tab.className = 'tab' + (isActive ? ' active-' + mediaMode : '');
-    document.getElementById('row-' + x).style.display = isActive ? '' : 'none';
+    tab.className = 'tab' + (x === t ? ' active-' + mediaMode : '');
+    document.getElementById('row-' + x).style.display = x === t ? '' : 'none';
   });
 }
 
@@ -265,11 +315,8 @@ async function byPerson(name, role, minScore, type) {
   const cd = await tmdb('/person/' + person.id + '/' + type + '_credits?language=no-NO');
   let list;
   if (type === 'movie') {
-    list = role === 'directing'
-      ? (cd.crew || []).filter(x => x.job === 'Director')
-      : (cd.cast || []);
+    list = role === 'directing' ? (cd.crew || []).filter(x => x.job === 'Director') : (cd.cast || []);
   } else {
-    // For serier: directing = created_by finnes ikke i credits, bruk crew med Creator/Executive Producer
     list = role === 'directing'
       ? (cd.crew || []).filter(x => ['Creator','Executive Producer','Series Director'].includes(x.job))
       : (cd.cast || []);
@@ -298,6 +345,7 @@ async function byDiscover(minScore, type) {
   let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=100&vote_average.gte=' + minScore;
   if (genre) url += '&with_genres=' + genre;
   if (decade) url += '&' + dateField + '.gte=' + decade + '-01-01&' + dateField + '.lte=' + (parseInt(decade)+9) + '-12-31';
+  if (activeLangs.size > 0) url += '&with_original_language=' + Array.from(activeLangs).join('|');
   const d = await tmdb(url);
   showStatus('');
   if (!d.results || !d.results.length) { showStatus('Ingen resultater funnet.'); return; }
@@ -307,7 +355,6 @@ async function byDiscover(minScore, type) {
 function getTitle(item, type) {
   return type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
 }
-
 function getYear(item, type) {
   const date = type === 'movie' ? item.release_date : item.first_air_date;
   return date ? date.slice(0,4) : '—';
@@ -319,9 +366,7 @@ function render(items, type) {
     const title = getTitle(m, type);
     const year = getYear(m, type);
     return '<div class="card" onclick="openModal(' + m.id + ',\'' + type + '\')" title="' + title.replace(/"/g,'') + '">' +
-      (m.poster_path
-        ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>'
-        : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
+      (m.poster_path ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>' : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
       '<div class="card-info">' +
       '<div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
       '<div class="card-title">' + title + '</div>' +
@@ -364,13 +409,11 @@ async function openModal(id, type) {
   const free = no.free || [];
   const flatrate = no.flatrate || [];
   const rent = no.rent || [];
-
   const title = type === 'movie' ? m.title : m.name;
-  const year = type === 'movie'
-    ? (m.release_date ? m.release_date.slice(0,4) : '')
-    : (m.first_air_date ? m.first_air_date.slice(0,4) : '');
+  const year = type === 'movie' ? (m.release_date || '').slice(0,4) : (m.first_air_date || '').slice(0,4);
+  const cast = (cr.cast || []).slice(0,5).map(x => x.name).join(', ');
+  const genres = (m.genres || []).map(g => g.name).join(', ');
 
-  // Ekstra info avhengig av type
   let extraInfo = '';
   if (type === 'movie') {
     const director = (cr.crew || []).find(x => x.job === 'Director');
@@ -379,17 +422,12 @@ async function openModal(id, type) {
   } else {
     const creators = (m.created_by || []).map(x => x.name).join(', ');
     if (creators) extraInfo += '<div class="section-label">Skaper</div><div class="modal-text">' + creators + '</div>';
-    const seasons = m.number_of_seasons;
-    const episodes = m.number_of_episodes;
-    if (seasons) extraInfo += '<div class="section-label">Sesonger</div><div class="modal-text">' + seasons + ' sesong' + (seasons > 1 ? 'er' : '') + (episodes ? ' · ' + episodes + ' episoder' : '') + '</div>';
-    const status = m.status === 'Ended' ? 'Avsluttet' : m.status === 'Returning Series' ? 'Pågående' : m.status || '';
-    if (status) extraInfo += ' <span style="font-size:11px;color:var(--text-dim)">(' + status + ')</span>';
+    if (m.number_of_seasons) {
+      const status = m.status === 'Ended' ? ' · Avsluttet' : m.status === 'Returning Series' ? ' · Pågående' : '';
+      extraInfo += '<div class="section-label">Sesonger</div><div class="modal-text">' + m.number_of_seasons + ' sesong' + (m.number_of_seasons > 1 ? 'er' : '') + (m.number_of_episodes ? ' · ' + m.number_of_episodes + ' episoder' : '') + status + '</div>';
+    }
   }
 
-  const cast = (cr.cast || []).slice(0,5).map(x => x.name).join(', ');
-  const genres = (m.genres || []).map(g => g.name).join(', ');
-
-  // IMDb via OMDb
   let imdbRating = null, rtRating = null;
   const imdbId = m.imdb_id || (m.external_ids && m.external_ids.imdb_id);
   if (imdbId) {
@@ -406,9 +444,7 @@ async function openModal(id, type) {
   function providerBlock(p, label) {
     return '<div class="provider">' +
       (p.logo_path ? '<img src="' + IMG + 'w45' + p.logo_path + '" alt="' + p.provider_name + '"/>' : '') +
-      p.provider_name +
-      (label ? '<span class="provider-label">' + label + '</span>' : '') +
-      '</div>';
+      p.provider_name + (label ? '<span class="provider-label">' + label + '</span>' : '') + '</div>';
   }
 
   let providersHtml = '';
@@ -420,8 +456,7 @@ async function openModal(id, type) {
   if (rent.length) providersHtml += rent.slice(0,4).map(p => providerBlock(p, 'Leie')).join('');
 
   document.getElementById('modal-inner').innerHTML =
-    (m.backdrop_path
-      ? '<img src="' + IMG + 'w780' + m.backdrop_path + '" class="modal-poster" alt=""/>'
+    (m.backdrop_path ? '<img src="' + IMG + 'w780' + m.backdrop_path + '" class="modal-poster" alt=""/>'
       : m.poster_path ? '<img src="' + IMG + 'w500' + m.poster_path + '" class="modal-poster" alt=""/>' : '') +
     '<div class="modal-body">' +
     '<div class="modal-title">' + title + (year ? ' <span style="font-weight:400;color:#666">(' + year + ')</span>' : '') + '</div>' +
@@ -435,9 +470,7 @@ async function openModal(id, type) {
     (genres ? '<div class="section-label">Sjanger</div><div class="modal-text">' + genres + '</div>' : '') +
     (m.overview ? '<div class="section-label">Handling</div><div class="modal-text">' + m.overview + '</div>' : '') +
     '<div class="section-label">Tilgjengelig i Norge</div>' +
-    (providersHtml
-      ? '<div class="providers">' + providersHtml + '</div>'
-      : '<div class="no-providers">Ikke funnet på norske strømmetjenester</div>') +
+    (providersHtml ? '<div class="providers">' + providersHtml + '</div>' : '<div class="no-providers">Ikke funnet på norske strømmetjenester</div>') +
     (no.link ? '<a href="' + no.link + '" target="_blank" rel="noopener" class="justwatch-link">Se alle tilbud på JustWatch →</a>' : '') +
     '</div>';
 }
@@ -450,6 +483,7 @@ document.getElementById('query-title').addEventListener('keydown', e => { if (e.
 
 setType('person');
 loadGenres();
+renderLangChips('');
 </script>
 </body>
 </html>
