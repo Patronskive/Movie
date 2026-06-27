@@ -23,333 +23,77 @@
 
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 15px;
-    line-height: 1.5;
-    min-height: 100vh;
-  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; min-height: 100vh; }
 
-  header {
-    padding: 2rem 1.5rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    max-width: 1100px;
-    margin: 0 auto;
-  }
-
-  header h1 {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  header p {
-    font-size: 13px;
-    color: var(--text-muted);
-    margin-top: 3px;
-  }
+  header { padding: 2rem 1.5rem 1.5rem; border-bottom: 1px solid var(--border); max-width: 1100px; margin: 0 auto; }
+  header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  header p { font-size: 13px; color: var(--text-muted); margin-top: 3px; }
 
   .main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
 
-  .search-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
-  }
+  .search-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1.5rem; }
 
-  .tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 1rem;
-  }
-
-  .tab {
-    padding: 5px 14px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: var(--font);
-  }
-
+  .tabs { display: flex; gap: 6px; margin-bottom: 1rem; }
+  .tab { padding: 5px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 13px; cursor: pointer; transition: all 0.15s; font-family: var(--font); }
   .tab:hover { border-color: #444; color: var(--text); }
   .tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
 
-  .search-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+  .search-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
   input[type=text], input[type=number], select {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 7px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-family: var(--font);
-    outline: none;
-    transition: border-color 0.15s;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 7px; padding: 8px 12px; font-size: 14px; font-family: var(--font);
+    outline: none; transition: border-color 0.15s;
   }
-
-  input[type=text]:focus, input[type=number]:focus, select:focus {
-    border-color: var(--accent);
-  }
-
+  input[type=text]:focus, input[type=number]:focus, select:focus { border-color: var(--accent); }
   input[type=text] { flex: 1; min-width: 160px; }
   input[type=number] { width: 72px; }
   select { cursor: pointer; }
 
-  .score-label {
-    font-size: 13px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .score-label { font-size: 13px; color: var(--text-muted); white-space: nowrap; display: flex; align-items: center; gap: 6px; }
 
-  .btn {
-    background: var(--accent);
-    color: #111;
-    border: none;
-    border-radius: 7px;
-    padding: 8px 20px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: var(--font);
-    transition: opacity 0.15s;
-    white-space: nowrap;
-  }
-
+  .btn { background: var(--accent); color: #111; border: none; border-radius: 7px; padding: 8px 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font); transition: opacity 0.15s; white-space: nowrap; }
   .btn:hover { opacity: 0.88; }
 
-  .status {
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 14px;
-    padding: 3rem 0;
-  }
+  .status { text-align: center; color: var(--text-muted); font-size: 14px; padding: 3rem 0; }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 12px;
-  }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
 
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.15s, transform 0.15s;
-  }
-
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
   .card:hover { border-color: #444; transform: translateY(-2px); }
-
-  .card img {
-    width: 100%;
-    aspect-ratio: 2/3;
-    object-fit: cover;
-    display: block;
-    background: var(--surface2);
-  }
-
-  .no-poster {
-    width: 100%;
-    aspect-ratio: 2/3;
-    background: var(--surface2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-dim);
-    font-size: 28px;
-  }
+  .card img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; background: var(--surface2); }
+  .no-poster { width: 100%; aspect-ratio: 2/3; background: var(--surface2); display: flex; align-items: center; justify-content: center; color: var(--text-dim); font-size: 28px; }
 
   .card-info { padding: 8px 9px 10px; }
-
-  .score {
-    display: inline-block;
-    background: var(--accent-dim);
-    color: var(--accent);
-    border-radius: 4px;
-    padding: 1px 6px;
-    font-size: 11px;
-    font-weight: 600;
-    margin-bottom: 4px;
-  }
-
-  .card-title {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text);
-    line-height: 1.3;
-  }
-
+  .score { display: inline-block; background: var(--accent-dim); color: var(--accent); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .card-title { font-size: 12px; font-weight: 500; color: var(--text); line-height: 1.3; }
   .card-year { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
-
   .card-providers { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; min-height: 18px; }
-  .prov-logo { width: 18px; height: 18px; border-radius: 3px; object-fit: cover; flex-shrink: 0; }
-  .prov-name { font-size: 10px; color: var(--text-dim); }
 
   /* Modal */
-  .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.75);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-  }
-
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
   .modal-overlay.open { display: flex; }
-
-  .modal {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    max-width: 500px;
-    width: 100%;
-    max-height: 88vh;
-    overflow-y: auto;
-    position: relative;
-  }
-
-  .modal-close {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    font-size: 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-    font-family: var(--font);
-  }
-
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; max-width: 500px; width: 100%; max-height: 88vh; overflow-y: auto; position: relative; }
+  .modal-close { position: absolute; top: 12px; right: 12px; background: var(--surface2); border: 1px solid var(--border); color: var(--text-muted); border-radius: 50%; width: 30px; height: 30px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 1; font-family: var(--font); }
   .modal-close:hover { color: var(--text); }
-
-  .modal-poster {
-    width: 100%;
-    max-height: 340px;
-    object-fit: cover;
-    object-position: center 20%;
-    border-radius: 14px 14px 0 0;
-    display: block;
-  }
-
+  .modal-poster { width: 100%; max-height: 340px; object-fit: cover; object-position: center 20%; border-radius: 14px 14px 0 0; display: block; }
   .modal-body { padding: 1.25rem; }
-
-  .modal-title {
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-    margin-bottom: 6px;
-  }
-
-  .modal-scores {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-  }
-
-  .score-pill {
-    background: var(--accent-dim);
-    color: var(--accent);
-    border-radius: 6px;
-    padding: 3px 10px;
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .score-pill.rt {
-    background: rgba(250,100,60,0.12);
-    color: #fa6020;
-  }
-
-  .section-label {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 5px;
-    margin-top: 14px;
-  }
-
-  .modal-text {
-    font-size: 13px;
-    color: #aaa;
-    line-height: 1.6;
-  }
-
-  .providers {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 5px;
-  }
-
-  .provider {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 5px 10px;
-    font-size: 12px;
-    color: var(--text);
-    text-decoration: none;
-  }
-
-  .provider img {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-  }
-
-  .justwatch-link {
-    display: inline-block;
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--accent);
-    text-decoration: none;
-    opacity: 0.8;
-  }
-
+  .modal-title { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .modal-scores { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .score-pill { background: var(--accent-dim); color: var(--accent); border-radius: 6px; padding: 3px 10px; font-size: 13px; font-weight: 500; }
+  .score-pill.rt { background: rgba(250,100,60,0.12); color: #fa6020; }
+  .section-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 5px; margin-top: 14px; }
+  .modal-text { font-size: 13px; color: #aaa; line-height: 1.6; }
+  .providers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
+  .provider { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; font-size: 12px; color: var(--text); }
+  .provider img { width: 20px; height: 20px; border-radius: 4px; }
+  .justwatch-link { display: inline-block; margin-top: 10px; font-size: 12px; color: var(--accent); text-decoration: none; opacity: 0.8; }
   .justwatch-link:hover { opacity: 1; }
-
-  .no-providers {
-    font-size: 13px;
-    color: var(--text-dim);
-    margin-top: 4px;
-  }
+  .no-providers { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
 
   @media (max-width: 480px) {
-    .search-row { flex-direction: column; align-items: stretch; }
+    .search-row, .filter-row { flex-direction: column; align-items: stretch; }
     .btn { width: 100%; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
   }
@@ -359,7 +103,7 @@
 
 <header>
   <h1>Filmguide</h1>
-  <p>Søk på regissør, skuespiller eller filmtittel — se score og hvor du kan streame</p>
+  <p>Søk på regissør, skuespiller, filmtittel — eller bare velg sjanger og tiår</p>
 </header>
 
 <main class="main">
@@ -367,13 +111,39 @@
     <div class="tabs">
       <button class="tab active" id="tab-person" onclick="setType('person')">Regissør / skuespiller</button>
       <button class="tab" id="tab-title" onclick="setType('title')">Filmtittel</button>
+      <button class="tab" id="tab-discover" onclick="setType('discover')">Utforsk</button>
     </div>
-    <div class="search-row">
-      <input type="text" id="query" placeholder="F.eks. David Fincher" autocomplete="off"/>
+
+    <div id="row-person" class="search-row">
+      <input type="text" id="query-person" placeholder="F.eks. David Fincher" autocomplete="off"/>
       <select id="role-select">
         <option value="directing">Regissør</option>
         <option value="acting">Skuespiller</option>
       </select>
+    </div>
+
+    <div id="row-title" class="search-row" style="display:none">
+      <input type="text" id="query-title" placeholder="F.eks. Fight Club" autocomplete="off"/>
+    </div>
+
+    <div id="row-discover" class="filter-row" style="display:none">
+      <select id="genre-select">
+        <option value="">Alle sjangere</option>
+      </select>
+      <select id="decade-select">
+        <option value="">Alle tiår</option>
+        <option value="1950">1950-tallet</option>
+        <option value="1960">1960-tallet</option>
+        <option value="1970">1970-tallet</option>
+        <option value="1980">1980-tallet</option>
+        <option value="1990">1990-tallet</option>
+        <option value="2000">2000-tallet</option>
+        <option value="2010">2010-tallet</option>
+        <option value="2020">2020-tallet</option>
+      </select>
+    </div>
+
+    <div class="filter-row" style="margin-top: 8px;">
       <span class="score-label">
         Min score
         <input type="number" id="min-score" value="7" min="0" max="10" step="0.1"/>
@@ -400,12 +170,26 @@ const H = { Authorization: 'Bearer ' + TOKEN };
 const IMG = 'https://image.tmdb.org/t/p/';
 let searchType = 'person';
 
+// Load genres on startup
+async function loadGenres() {
+  try {
+    const d = await tmdb('/genre/movie/list?language=no-NO');
+    const sel = document.getElementById('genre-select');
+    (d.genres || []).forEach(g => {
+      const o = document.createElement('option');
+      o.value = g.id;
+      o.textContent = g.name;
+      sel.appendChild(o);
+    });
+  } catch(e) {}
+}
+
 function setType(t) {
   searchType = t;
-  document.getElementById('tab-person').classList.toggle('active', t === 'person');
-  document.getElementById('tab-title').classList.toggle('active', t === 'title');
-  document.getElementById('role-select').style.display = t === 'person' ? '' : 'none';
-  document.getElementById('query').placeholder = t === 'person' ? 'F.eks. David Fincher' : 'F.eks. Fight Club';
+  ['person','title','discover'].forEach(x => {
+    document.getElementById('tab-' + x).classList.toggle('active', x === t);
+    document.getElementById('row-' + x).style.display = x === t ? '' : 'none';
+  });
 }
 
 async function tmdb(path) {
@@ -420,17 +204,20 @@ function showStatus(msg) {
 }
 
 async function search() {
-  const q = document.getElementById('query').value.trim();
   const minScore = parseFloat(document.getElementById('min-score').value) || 0;
-  if (!q) return;
   document.getElementById('results').innerHTML = '';
   showStatus('Søker...');
   try {
     if (searchType === 'person') {
-      const role = document.getElementById('role-select').value;
-      await byPerson(q, role, minScore);
-    } else {
+      const q = document.getElementById('query-person').value.trim();
+      if (!q) { showStatus('Skriv inn et navn.'); return; }
+      await byPerson(q, document.getElementById('role-select').value, minScore);
+    } else if (searchType === 'title') {
+      const q = document.getElementById('query-title').value.trim();
+      if (!q) { showStatus('Skriv inn en filmtittel.'); return; }
       await byTitle(q, minScore);
+    } else {
+      await byDiscover(minScore);
     }
   } catch(e) {
     showStatus('Feil: ' + e.message);
@@ -461,6 +248,20 @@ async function byTitle(title, minScore) {
   render(filtered);
 }
 
+async function byDiscover(minScore) {
+  const genre = document.getElementById('genre-select').value;
+  const decade = document.getElementById('decade-select').value;
+  let url = `/discover/movie?language=no-NO&sort_by=vote_average.desc&vote_count.gte=200&vote_average.gte=${minScore}`;
+  if (genre) url += `&with_genres=${genre}`;
+  if (decade) {
+    url += `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade)+9}-12-31`;
+  }
+  const d = await tmdb(url);
+  showStatus('');
+  if (!d.results || !d.results.length) { showStatus('Ingen filmer funnet.'); return; }
+  render(d.results.slice(0, 40));
+}
+
 function render(movies) {
   document.getElementById('results').innerHTML = movies.map(m => `
     <div class="card" onclick="openModal(${m.id})" title="${m.title}">
@@ -489,8 +290,8 @@ async function fetchProvidersBatch(ids) {
       if (flatrate.length) {
         el.innerHTML = flatrate.slice(0,5).map(p =>
           p.logo_path
-            ? `<img src="${IMG}w45${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}" class="prov-logo" width="18" height="18"/>`
-            : `<span class="prov-name">${p.provider_name}</span>`
+            ? `<img src="${IMG}w45${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}" style="width:18px;height:18px;border-radius:3px;object-fit:cover;display:inline-block;vertical-align:middle;"/>`
+            : `<span style="font-size:10px;color:var(--text-dim)">${p.provider_name}</span>`
         ).join('');
       }
     } catch(e) {}
@@ -512,8 +313,7 @@ async function openModal(id) {
   const genres = (m.genres || []).map(g => g.name).join(', ');
   const runtime = m.runtime ? `${Math.floor(m.runtime/60)}t ${m.runtime%60}min` : '';
 
-  let imdbRating = null;
-  let rtRating = null;
+  let imdbRating = null, rtRating = null;
   if (m.imdb_id) {
     try {
       const or = await fetch(`https://www.omdbapi.com/?i=${m.imdb_id}&apikey=${OMDB_KEY}`);
@@ -527,9 +327,7 @@ async function openModal(id) {
   document.getElementById('modal-inner').innerHTML = `
     ${m.backdrop_path
       ? `<img src="${IMG}w780${m.backdrop_path}" class="modal-poster" alt="${m.title}"/>`
-      : m.poster_path
-        ? `<img src="${IMG}w500${m.poster_path}" class="modal-poster" alt="${m.title}"/>`
-        : ''}
+      : m.poster_path ? `<img src="${IMG}w500${m.poster_path}" class="modal-poster" alt="${m.title}"/>` : ''}
     <div class="modal-body">
       <div class="modal-title">${m.title}${m.release_date ? ' <span style="font-weight:400;color:#666">(' + m.release_date.slice(0,4) + ')</span>' : ''}</div>
       <div class="modal-scores">
@@ -547,27 +345,22 @@ async function openModal(id) {
             <div class="provider">
               ${p.logo_path ? `<img src="${IMG}w45${p.logo_path}" alt="${p.provider_name}"/>` : ''}
               ${p.provider_name}
-            </div>`).join('')}
-          </div>`
+            </div>`).join('')}</div>`
         : `<div class="no-providers">Ikke funnet på norske strømmetjenester</div>`}
       ${no.link ? `<a href="${no.link}" target="_blank" rel="noopener" class="justwatch-link">Se alle tilbud på JustWatch →</a>` : ''}
     </div>
   `;
 }
 
-function closeModal() {
-  document.getElementById('overlay').classList.remove('open');
-}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function handleOverlayClick(e) { if (e.target === document.getElementById('overlay')) closeModal(); }
 
-function handleOverlayClick(e) {
-  if (e.target === document.getElementById('overlay')) closeModal();
-}
-
-document.getElementById('query').addEventListener('keydown', e => {
-  if (e.key === 'Enter') search();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+document.getElementById('query-person').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
+document.getElementById('query-title').addEventListener('keydown', e => { if (e.key === 'Enter') search(); });
 
 setType('person');
+loadGenres();
 </script>
 </body>
 </html>
