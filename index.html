@@ -97,9 +97,7 @@
       <input type="text" id="query-title" placeholder="F.eks. Fight Club" autocomplete="off"/>
     </div>
     <div id="row-discover" class="filter-row" style="display:none">
-      <select id="genre-select">
-        <option value="">Alle sjangere</option>
-      </select>
+      <select id="genre-select"><option value="">Alle sjangere</option></select>
       <select id="decade-select">
         <option value="">Alle tiår</option>
         <option value="1950">1950-tallet</option>
@@ -133,7 +131,6 @@ const H = { Authorization: 'Bearer ' + TOKEN };
 const IMG = 'https://image.tmdb.org/t/p/';
 let searchType = 'person';
 
-// NRK logo as inline SVG data URI — no external dependency
 const NRK_LOGO = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' rx='5' fill='%23003087'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='11' font-weight='bold' font-family='sans-serif'>NRK</text></svg>`;
 
 function loadGenres() {
@@ -148,9 +145,7 @@ function loadGenres() {
   const sel = document.getElementById('genre-select');
   genres.forEach(g => {
     const o = document.createElement('option');
-    o.value = g.id;
-    o.textContent = g.name;
-    sel.appendChild(o);
+    o.value = g.id; o.textContent = g.name; sel.appendChild(o);
   });
 }
 
@@ -167,20 +162,40 @@ async function tmdb(path) {
   return r.json();
 }
 
-// Reusable NRK search — works for both films and series
-async function searchNRK(title) {
-  try {
-    const r = await fetch(`https://psapi.nrk.no/tv/search?q=${encodeURIComponent(title)}&limit=5`);
-    const d = await r.json();
-    const tl = title.toLowerCase().trim();
-    const hit = (d.hits || []).find(h => {
-      const ht = (h.hit && h.hit.title || '').toLowerCase().trim();
-      return ht === tl || ht.startsWith(tl) || tl.startsWith(ht);
-    });
-    if (!hit) return null;
-    const id = hit.hit.id || '';
-    return { url: `https://tv.nrk.no/${id}`, title: hit.hit.title };
-  } catch(e) { return null; }
+// Reusable NRK search — søker på flere titler og bruker løs matching
+// Fungerer for både filmer og serier
+async function searchNRK(titles) {
+  const candidates = Array.isArray(titles) ? titles : [titles];
+  for (const title of candidates) {
+    if (!title) continue;
+    try {
+      const r = await fetch(`https://psapi.nrk.no/tv/search?q=${encodeURIComponent(title)}&limit=6`);
+      const d = await r.json();
+      const tl = title.toLowerCase().trim();
+      const hit = (d.hits || []).find(h => {
+        const ht = (h.hit && h.hit.title || '').toLowerCase().trim();
+        // Eksakt match, eller en tittel inneholder den andre (for å fange norske titler)
+        return ht === tl || ht.includes(tl) || tl.includes(ht) ||
+               levenshtein(ht, tl) <= 3;
+      });
+      if (hit) {
+        const id = hit.hit.id || '';
+        return { url: `https://tv.nrk.no/${id}`, title: hit.hit.title };
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+// Enkel Levenshtein-avstand for fuzzy matching
+function levenshtein(a, b) {
+  if (Math.abs(a.length - b.length) > 5) return 99;
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m+1}, (_, i) => Array.from({length: n+1}, (_, j) => i === 0 ? j : j === 0 ? i : 0));
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1] : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
 }
 
 function showStatus(msg) {
@@ -205,9 +220,7 @@ async function search() {
     } else {
       await byDiscover(minScore);
     }
-  } catch(e) {
-    showStatus('Feil: ' + e.message);
-  }
+  } catch(e) { showStatus('Feil: ' + e.message); }
 }
 
 async function byPerson(name, role, minScore) {
@@ -266,14 +279,20 @@ function render(movies) {
 async function fetchProvidersBatch(movies) {
   for (const m of movies) {
     try {
-      const [wp, nrk] = await Promise.all([
+      // Hent originaltittel fra TMDB for bedre NRK-matching
+      const [wp, details] = await Promise.all([
         tmdb(`/movie/${m.id}/watch/providers`),
-        searchNRK(m.title)
+        tmdb(`/movie/${m.id}?language=no-NO`)
       ]);
+      // Prøv engelsk tittel, norsk tittel og originaltittel
+      const titlesToTry = [m.title, details.title, details.original_title].filter(Boolean);
+      const nrk = await searchNRK(titlesToTry);
+
       const flatrate = wp.results && wp.results.NO && wp.results.NO.flatrate
         ? wp.results.NO.flatrate : [];
       const el = document.getElementById('prov-' + m.id);
       if (!el) continue;
+
       const logos = flatrate.slice(0, 4).map(p =>
         p.logo_path
           ? `<img src="${IMG}w45${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}" style="width:18px;height:18px;border-radius:3px;object-fit:cover;display:inline-block;vertical-align:middle;"/>`
@@ -313,7 +332,8 @@ async function openModal(id) {
     } catch(e) {}
   }
 
-  const nrk = await searchNRK(m.title);
+  const titlesToTry = [m.title, m.original_title].filter(Boolean);
+  const nrk = await searchNRK(titlesToTry);
 
   const allProviders = [
     ...flatrate.map(p => `
