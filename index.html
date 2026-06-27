@@ -64,6 +64,7 @@
   .providers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; }
   .provider { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 5px 10px; font-size: 12px; color: var(--text); text-decoration: none; }
   .provider img { width: 20px; height: 20px; border-radius: 4px; }
+  .provider-label { font-size: 10px; color: var(--text-dim); margin-left: 2px; }
   .justwatch-link { display: inline-block; margin-top: 10px; font-size: 12px; color: var(--accent); text-decoration: none; opacity: 0.8; }
   .justwatch-link:hover { opacity: 1; }
   .no-providers { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
@@ -131,7 +132,16 @@ const H = { Authorization: 'Bearer ' + TOKEN };
 const IMG = 'https://image.tmdb.org/t/p/';
 let searchType = 'person';
 
-const NRK_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><rect width='40' height='40' rx='5' fill='%23003087'/><text x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='11' font-weight='bold' font-family='sans-serif'>NRK</text></svg>";
+// Kombiner free og flatrate fra TMDB, fjern duplikater
+function getProviders(no) {
+  const free = no.free || [];
+  const flatrate = no.flatrate || [];
+  const seen = new Set();
+  return [...free, ...flatrate].filter(p => {
+    if (seen.has(p.provider_id)) return false;
+    seen.add(p.provider_id); return true;
+  });
+}
 
 function loadGenres() {
   const genres = [
@@ -160,36 +170,6 @@ function setType(t) {
 async function tmdb(path) {
   const r = await fetch('https://api.themoviedb.org/3' + path, { headers: H });
   return r.json();
-}
-
-// Søk i NRK sitt API — bruker tvapi.nrk.no som returnerer programId og tittel
-// Gjenbrukbar for seriesiden også
-async function searchNRK(titles) {
-  const candidates = Array.isArray(titles) ? titles : [titles];
-  for (const title of candidates) {
-    if (!title) continue;
-    try {
-      const r = await fetch('https://tvapi.nrk.no/v1/search/' + encodeURIComponent(title));
-      if (!r.ok) continue;
-      const d = await r.json();
-      const hits = d.hits || [];
-      const tl = title.toLowerCase().trim();
-      // Finn beste treff: eksakt tittel eller tittel som inneholder søketermen
-      const hit = hits.find(h => {
-        const ht = (h.hit && h.hit.title || '').toLowerCase().trim();
-        return ht === tl || ht.includes(tl) || tl.includes(ht);
-      });
-      if (hit && hit.hit) {
-        const programId = hit.hit.programId || hit.hit.objectId || '';
-        if (!programId) continue;
-        return {
-          url: 'https://tv.nrk.no/program/' + programId,
-          title: hit.hit.title
-        };
-      }
-    } catch(e) {}
-  }
-  return null;
 }
 
 function showStatus(msg) {
@@ -269,27 +249,21 @@ function render(movies) {
   fetchProvidersBatch(movies);
 }
 
+function providerLogoHtml(p) {
+  return p.logo_path
+    ? '<img src="' + IMG + 'w45' + p.logo_path + '" title="' + p.provider_name + '" style="width:18px;height:18px;border-radius:3px;object-fit:cover;display:inline-block;vertical-align:middle;"/>'
+    : '<span style="font-size:10px;color:var(--text-dim)">' + p.provider_name + '</span>';
+}
+
 async function fetchProvidersBatch(movies) {
   for (const m of movies) {
     try {
-      const [wp, details] = await Promise.all([
-        tmdb('/movie/' + m.id + '/watch/providers'),
-        tmdb('/movie/' + m.id + '?language=no-NO')
-      ]);
-      const titlesToTry = [m.title, details.title, details.original_title].filter(Boolean);
-      const nrk = await searchNRK(titlesToTry);
-      const flatrate = (wp.results && wp.results.NO && wp.results.NO.flatrate) || [];
+      const wp = await tmdb('/movie/' + m.id + '/watch/providers');
+      const no = (wp.results && wp.results.NO) || {};
+      const providers = getProviders(no);
       const el = document.getElementById('prov-' + m.id);
       if (!el) continue;
-      let html = flatrate.slice(0,4).map(p =>
-        p.logo_path
-          ? '<img src="' + IMG + 'w45' + p.logo_path + '" title="' + p.provider_name + '" style="width:18px;height:18px;border-radius:3px;object-fit:cover;display:inline-block;vertical-align:middle;"/>'
-          : '<span style="font-size:10px;color:var(--text-dim)">' + p.provider_name + '</span>'
-      ).join('');
-      if (nrk) {
-        html += '<a href="' + nrk.url + '" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Se på NRK TV">' +
-                '<img src="' + NRK_LOGO + '" style="width:18px;height:18px;border-radius:3px;display:inline-block;vertical-align:middle;"/></a>';
-      }
+      const html = providers.slice(0, 5).map(providerLogoHtml).join('');
       if (html) el.innerHTML = html;
     } catch(e) {}
   }
@@ -304,7 +278,9 @@ async function openModal(id) {
     tmdb('/movie/' + id + '/credits?language=no-NO'),
   ]);
   const no = (wp.results && wp.results.NO) || {};
+  const free = no.free || [];
   const flatrate = no.flatrate || [];
+  const rent = no.rent || [];
   const director = (cr.crew || []).find(x => x.job === 'Director');
   const cast = (cr.cast || []).slice(0,5).map(x => x.name).join(', ');
   const genres = (m.genres || []).map(g => g.name).join(', ');
@@ -320,17 +296,22 @@ async function openModal(id) {
     } catch(e) {}
   }
 
-  const nrk = await searchNRK([m.title, m.original_title].filter(Boolean));
-
-  const allProviders = [
-    ...flatrate.map(p =>
-      '<div class="provider">' +
+  function providerBlock(p, label) {
+    return '<div class="provider">' +
       (p.logo_path ? '<img src="' + IMG + 'w45' + p.logo_path + '" alt="' + p.provider_name + '"/>' : '') +
-      p.provider_name + '</div>'
-    ),
-    nrk ? '<a href="' + nrk.url + '" target="_blank" rel="noopener" class="provider" onclick="event.stopPropagation()">' +
-          '<img src="' + NRK_LOGO + '" alt="NRK TV"/> NRK TV</a>' : ''
-  ].filter(Boolean);
+      p.provider_name +
+      (label ? '<span class="provider-label">' + label + '</span>' : '') +
+      '</div>';
+  }
+
+  // Bygg provider-seksjon med kategorier
+  let providersHtml = '';
+  if (free.length) providersHtml += free.map(p => providerBlock(p, 'Gratis')).join('');
+  if (flatrate.length) {
+    const seen = new Set(free.map(p => p.provider_id));
+    flatrate.filter(p => !seen.has(p.provider_id)).forEach(p => { providersHtml += providerBlock(p, ''); });
+  }
+  if (rent.length) providersHtml += rent.slice(0,4).map(p => providerBlock(p, 'Leie')).join('');
 
   document.getElementById('modal-inner').innerHTML =
     (m.backdrop_path
@@ -348,8 +329,8 @@ async function openModal(id) {
     (genres ? '<div class="section-label">Sjanger</div><div class="modal-text">' + genres + (runtime ? ' · ' + runtime : '') + '</div>' : '') +
     (m.overview ? '<div class="section-label">Handling</div><div class="modal-text">' + m.overview + '</div>' : '') +
     '<div class="section-label">Tilgjengelig i Norge</div>' +
-    (allProviders.length
-      ? '<div class="providers">' + allProviders.join('') + '</div>'
+    (providersHtml
+      ? '<div class="providers">' + providersHtml + '</div>'
       : '<div class="no-providers">Ikke funnet på norske strømmetjenester</div>') +
     (no.link ? '<a href="' + no.link + '" target="_blank" rel="noopener" class="justwatch-link">Se alle tilbud på JustWatch →</a>' : '') +
     '</div>';
