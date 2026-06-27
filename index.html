@@ -200,6 +200,10 @@
 
   .card-year { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 
+  .card-providers { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; min-height: 20px; }
+  .prov-logo { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; }
+  .prov-name { font-size: 10px; color: var(--text-dim); }
+
   /* Modal */
   .modal-overlay {
     display: none;
@@ -467,9 +471,30 @@ function render(movies) {
         <div class="score">★ ${m.vote_average.toFixed(1)}</div>
         <div class="card-title">${m.title}</div>
         <div class="card-year">${m.release_date ? m.release_date.slice(0,4) : '—'}</div>
+        <div class="card-providers" id="prov-${m.id}"></div>
       </div>
     </div>
   `).join('');
+  fetchProvidersBatch(movies.map(m => m.id));
+}
+
+async function fetchProvidersBatch(ids) {
+  for (const id of ids) {
+    try {
+      const wp = await tmdb(`/movie/${id}/watch/providers`);
+      const flatrate = wp.results && wp.results.NO && wp.results.NO.flatrate
+        ? wp.results.NO.flatrate : [];
+      const el = document.getElementById('prov-' + id);
+      if (!el) continue;
+      if (flatrate.length) {
+        el.innerHTML = flatrate.slice(0,4).map(p =>
+          p.logo_path
+            ? `<img src="${IMG}w45${p.logo_path}" alt="${p.provider_name}" title="${p.provider_name}" class="prov-logo"/>`
+            : `<span class="prov-name">${p.provider_name}</span>`
+        ).join('');
+      }
+    } catch(e) {}
+  }
 }
 
 async function openModal(id) {
