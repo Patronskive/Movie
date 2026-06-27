@@ -17,7 +17,7 @@
   body { background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; min-height: 100vh; }
   header { padding: 2rem 1.5rem 1rem; max-width: 1100px; margin: 0 auto; }
   header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
-  .media-tabs { display: flex; gap: 0; margin-top: 1rem; border-bottom: 1px solid var(--border); }
+  .media-tabs { display: flex; margin-top: 1rem; border-bottom: 1px solid var(--border); }
   .media-tab { padding: 10px 24px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: var(--text-muted); font-family: var(--font); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
   .media-tab:hover { color: var(--text); }
   .media-tab.active-film { color: var(--accent); border-bottom-color: var(--accent); }
@@ -46,8 +46,8 @@
   .btn-film { background: var(--accent); color: #111; }
   .btn-serie { background: var(--accent2); color: #111; }
   .btn:hover { opacity: 0.88; }
-
-  /* Språk-filter */
+  .btn-more { background: var(--surface2); color: var(--text-muted); border: 1px solid var(--border); border-radius: 7px; padding: 10px 28px; font-size: 14px; font-family: var(--font); cursor: pointer; display: block; margin: 1.5rem auto 0; transition: all 0.15s; }
+  .btn-more:hover { border-color: #555; color: var(--text); }
   .lang-section { margin-bottom: 8px; }
   .lang-search { width: 100%; margin-bottom: 6px; font-size: 13px; padding: 6px 10px; }
   .lang-chips { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -55,7 +55,6 @@
   .lang-chip:hover { border-color: #555; color: var(--text); }
   .lang-chip.active-film { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
   .lang-chip.active-serie { background: var(--accent2-dim); border-color: var(--accent2); color: var(--accent2); }
-
   .status { text-align: center; color: var(--text-muted); font-size: 14px; padding: 3rem 0; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; cursor: pointer; transition: border-color 0.15s, transform 0.15s; }
@@ -108,13 +107,11 @@
 </header>
 <main class="main mode-film" id="main">
   <div class="search-panel">
-    <div class="tabs" id="search-tabs">
+    <div class="tabs">
       <button class="tab active-film" id="tab-person" onclick="setType('person')">Regissør / skuespiller</button>
       <button class="tab" id="tab-title" onclick="setType('title')">Tittel</button>
       <button class="tab" id="tab-discover" onclick="setType('discover')">Utforsk</button>
     </div>
-
-    <!-- Person-rad -->
     <div id="row-person" class="search-row">
       <input type="text" id="query-person" placeholder="F.eks. David Fincher" autocomplete="off"/>
       <select id="role-select">
@@ -122,13 +119,9 @@
         <option value="acting">Skuespiller</option>
       </select>
     </div>
-
-    <!-- Tittel-rad -->
     <div id="row-title" class="search-row" style="display:none">
       <input type="text" id="query-title" placeholder="F.eks. Fight Club" autocomplete="off"/>
     </div>
-
-    <!-- Utforsk-rad -->
     <div id="row-discover" style="display:none">
       <div class="filter-row">
         <select id="genre-select"><option value="">Alle sjangere</option></select>
@@ -144,13 +137,11 @@
           <option value="2020">2020-tallet</option>
         </select>
       </div>
-      <!-- Språkfilter -->
       <div class="lang-section">
         <input type="text" class="lang-search" id="lang-search" placeholder="Filtrer språk..." oninput="filterLangs(this.value)" autocomplete="off"/>
         <div class="lang-chips" id="lang-chips"></div>
       </div>
     </div>
-
     <div class="filter-row">
       <span class="score-label">Min score <input type="number" id="min-score" value="7" min="0" max="10" step="0.1"/></span>
       <button class="btn btn-film" id="search-btn" onclick="search()">Søk</button>
@@ -158,6 +149,7 @@
   </div>
   <div id="status" class="status" style="display:none"></div>
   <div class="grid" id="results"></div>
+  <button class="btn-more" id="btn-more" style="display:none" onclick="loadMore()">Last inn flere</button>
 </main>
 <div class="modal-overlay" id="overlay" onclick="handleOverlayClick(event)">
   <div class="modal" id="modal">
@@ -173,6 +165,12 @@ const IMG = 'https://image.tmdb.org/t/p/';
 let mediaMode = 'film';
 let searchType = 'person';
 let activeLangs = new Set();
+
+// Paginering
+let currentPage = 1;
+let totalPages = 1;
+let currentDiscoverUrl = '';
+let currentType = 'movie';
 
 const LANGUAGES = [
   {code:'no',name:'Norsk'},{code:'sv',name:'Svensk'},{code:'da',name:'Dansk'},
@@ -201,12 +199,10 @@ const SERIE_GENRES = [
 ];
 
 function renderLangChips(filter) {
-  const container = document.getElementById('lang-chips');
   const f = (filter || '').toLowerCase();
   const visible = LANGUAGES.filter(l => !f || l.name.toLowerCase().includes(f));
-  container.innerHTML = visible.map(l =>
-    '<button class="lang-chip' + (activeLangs.has(l.code) ? ' active-' + mediaMode : '') + '" ' +
-    'onclick="toggleLang(\'' + l.code + '\')">' + l.name + '</button>'
+  document.getElementById('lang-chips').innerHTML = visible.map(l =>
+    '<button class="lang-chip' + (activeLangs.has(l.code) ? ' active-' + mediaMode : '') + '" onclick="toggleLang(\'' + l.code + '\')">' + l.name + '</button>'
   ).join('');
 }
 
@@ -237,9 +233,7 @@ function setMedia(mode) {
   document.getElementById('search-btn').className = 'btn btn-' + mode;
   ['tab-person','tab-title','tab-discover'].forEach(id => {
     const el = document.getElementById(id);
-    if (el.classList.contains('active-film') || el.classList.contains('active-serie')) {
-      el.className = 'tab active-' + mode;
-    }
+    if (el.className.includes('active-')) el.className = 'tab active-' + mode;
   });
   if (isFilm) {
     document.getElementById('role-select').options[0].text = 'Regissør';
@@ -255,14 +249,14 @@ function setMedia(mode) {
   renderLangChips('');
   document.getElementById('lang-search').value = '';
   document.getElementById('results').innerHTML = '';
+  document.getElementById('btn-more').style.display = 'none';
   showStatus('');
 }
 
 function setType(t) {
   searchType = t;
   ['person','title','discover'].forEach(x => {
-    const tab = document.getElementById('tab-' + x);
-    tab.className = 'tab' + (x === t ? ' active-' + mediaMode : '');
+    document.getElementById('tab-' + x).className = 'tab' + (x === t ? ' active-' + mediaMode : '');
     document.getElementById('row-' + x).style.display = x === t ? '' : 'none';
   });
 }
@@ -279,33 +273,53 @@ function showStatus(msg) {
 }
 
 function getProviders(no) {
-  const free = no.free || [];
-  const flatrate = no.flatrate || [];
   const seen = new Set();
-  return [...free, ...flatrate].filter(p => {
+  return [...(no.free || []), ...(no.flatrate || [])].filter(p => {
     if (seen.has(p.provider_id)) return false;
     seen.add(p.provider_id); return true;
   });
 }
 
+function buildDiscoverUrl(minScore, type) {
+  const genre = document.getElementById('genre-select').value;
+  const decade = document.getElementById('decade-select').value;
+  const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
+  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=100&vote_average.gte=' + minScore;
+  if (genre) url += '&with_genres=' + genre;
+  if (decade) url += '&' + dateField + '.gte=' + decade + '-01-01&' + dateField + '.lte=' + (parseInt(decade)+9) + '-12-31';
+  if (activeLangs.size > 0) url += '&with_original_language=' + Array.from(activeLangs).join('|');
+  return url;
+}
+
 async function search() {
   const minScore = parseFloat(document.getElementById('min-score').value) || 0;
   document.getElementById('results').innerHTML = '';
+  document.getElementById('btn-more').style.display = 'none';
   showStatus('Søker...');
-  const type = mediaMode === 'film' ? 'movie' : 'tv';
+  currentType = mediaMode === 'film' ? 'movie' : 'tv';
+  currentPage = 1;
   try {
     if (searchType === 'person') {
       const q = document.getElementById('query-person').value.trim();
       if (!q) { showStatus('Skriv inn et navn.'); return; }
-      await byPerson(q, document.getElementById('role-select').value, minScore, type);
+      await byPerson(q, document.getElementById('role-select').value, minScore, currentType);
     } else if (searchType === 'title') {
       const q = document.getElementById('query-title').value.trim();
       if (!q) { showStatus('Skriv inn en tittel.'); return; }
-      await byTitle(q, minScore, type);
+      await byTitle(q, minScore, currentType);
     } else {
-      await byDiscover(minScore, type);
+      currentDiscoverUrl = buildDiscoverUrl(minScore, currentType);
+      await byDiscover(currentDiscoverUrl, 1, currentType, false);
     }
   } catch(e) { showStatus('Feil: ' + e.message); }
+}
+
+async function loadMore() {
+  if (currentPage >= totalPages) return;
+  document.getElementById('btn-more').textContent = 'Laster...';
+  currentPage++;
+  await byDiscover(currentDiscoverUrl, currentPage, currentType, true);
+  document.getElementById('btn-more').textContent = 'Last inn flere';
 }
 
 async function byPerson(name, role, minScore, type) {
@@ -322,12 +336,11 @@ async function byPerson(name, role, minScore, type) {
       : (cd.cast || []);
     if (role === 'directing' && !list.length) list = cd.crew || [];
   }
-  const filtered = list
-    .filter(m => m.vote_average >= minScore && m.vote_count > 20)
+  const filtered = list.filter(m => m.vote_average >= minScore && m.vote_count > 20)
     .sort((a, b) => b.vote_average - a.vote_average);
   showStatus('');
-  if (!filtered.length) { showStatus('Ingen resultater over ' + minScore + ' for ' + person.name + '.'); return; }
-  render(filtered.slice(0, 40), type);
+  if (!filtered.length) { showStatus('Ingen resultater funnet.'); return; }
+  render(filtered.slice(0, 40), type, false);
 }
 
 async function byTitle(title, minScore, type) {
@@ -335,48 +348,70 @@ async function byTitle(title, minScore, type) {
   const filtered = (d.results || []).filter(m => m.vote_average >= minScore);
   showStatus('');
   if (!filtered.length) { showStatus('Ingen resultater funnet.'); return; }
-  render(filtered, type);
+  render(filtered, type, false);
 }
 
-async function byDiscover(minScore, type) {
-  const genre = document.getElementById('genre-select').value;
-  const decade = document.getElementById('decade-select').value;
-  const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=100&vote_average.gte=' + minScore;
-  if (genre) url += '&with_genres=' + genre;
-  if (decade) url += '&' + dateField + '.gte=' + decade + '-01-01&' + dateField + '.lte=' + (parseInt(decade)+9) + '-12-31';
-  if (activeLangs.size > 0) url += '&with_original_language=' + Array.from(activeLangs).join('|');
-  const d = await tmdb(url);
+async function byDiscover(baseUrl, page, type, append) {
+  const d = await tmdb(baseUrl + '&page=' + page);
+  totalPages = d.total_pages || 1;
   showStatus('');
-  if (!d.results || !d.results.length) { showStatus('Ingen resultater funnet.'); return; }
-  render(d.results.slice(0, 40), type);
+  if (!d.results || !d.results.length) {
+    if (!append) showStatus('Ingen resultater funnet.');
+    document.getElementById('btn-more').style.display = 'none';
+    return;
+  }
+  render(d.results, type, append);
+  document.getElementById('btn-more').style.display = page < totalPages ? 'block' : 'none';
 }
 
-function getTitle(item, type) {
-  return type === 'movie' ? (item.title || item.original_title) : (item.name || item.original_name);
-}
-function getYear(item, type) {
-  const date = type === 'movie' ? item.release_date : item.first_air_date;
-  return date ? date.slice(0,4) : '—';
-}
 
-function render(items, type) {
+
+
   const scoreClass = 'score score-' + mediaMode;
-  document.getElementById('results').innerHTML = items.map(m => {
+  const html = items.map(m => {
     const title = getTitle(m, type);
     const year = getYear(m, type);
     return '<div class="card" onclick="openModal(' + m.id + ',\'' + type + '\')" title="' + title.replace(/"/g,'') + '">' +
       (m.poster_path ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>' : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
-      '<div class="card-info">' +
-      '<div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
+      '<div class="card-info"><div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
       '<div class="card-title">' + title + '</div>' +
       '<div class="card-year">' + year + '</div>' +
-      '<div class="card-providers" id="prov-' + m.id + '"></div>' +
-      '</div></div>';
+      '<div class="card-providers" id="prov-' + m.id + '"></div></div></div>';
   }).join('');
+  if (append) document.getElementById('results').insertAdjacentHTML('beforeend', html);
+  else document.getElementById('results').innerHTML = html;
   fetchProvidersBatch(items, type);
 }
 
+
+function getTitle(m, type) {
+  const NORDIC_EN = ['no','nb','nn','sv','da','en'];
+  const origLang = m.original_language || '';
+  const origTitle = type === 'movie' ? m.original_title : m.original_name;
+  const localTitle = type === 'movie' ? m.title : m.name;
+  if (NORDIC_EN.includes(origLang)) return origTitle || localTitle;
+  return localTitle || origTitle;
+}
+function getYear(m, type) {
+  const d = type === 'movie' ? m.release_date : m.first_air_date;
+  return d ? d.slice(0,4) : '—';
+}
+function render(items, type, append) {
+  const scoreClass = 'score score-' + mediaMode;
+  const html = items.map(m => {
+    const title = getTitle(m, type);
+    const year = getYear(m, type);
+    return '<div class="card" onclick="openModal(' + m.id + ',\'' + type + '\')" title="' + title.replace(/"/g,'') + '">' +
+      (m.poster_path ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>' : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
+      '<div class="card-info"><div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
+      '<div class="card-title">' + title + '</div>' +
+      '<div class="card-year">' + year + '</div>' +
+      '<div class="card-providers" id="prov-' + m.id + '"></div></div></div>';
+  }).join('');
+  if (append) document.getElementById('results').insertAdjacentHTML('beforeend', html);
+  else document.getElementById('results').innerHTML = html;
+  fetchProvidersBatch(items, type);
+}
 function providerLogoHtml(p) {
   return p.logo_path
     ? '<img src="' + IMG + 'w45' + p.logo_path + '" title="' + p.provider_name + '" style="width:18px;height:18px;border-radius:3px;object-fit:cover;display:inline-block;vertical-align:middle;"/>'
@@ -388,10 +423,9 @@ async function fetchProvidersBatch(items, type) {
     try {
       const wp = await tmdb('/' + type + '/' + m.id + '/watch/providers');
       const no = (wp.results && wp.results.NO) || {};
-      const providers = getProviders(no);
       const el = document.getElementById('prov-' + m.id);
       if (!el) continue;
-      const html = providers.slice(0,5).map(providerLogoHtml).join('');
+      const html = getProviders(no).slice(0,5).map(providerLogoHtml).join('');
       if (html) el.innerHTML = html;
     } catch(e) {}
   }
@@ -406,33 +440,30 @@ async function openModal(id, type) {
     tmdb('/' + type + '/' + id + '/credits?language=no-NO'),
   ]);
   const no = (wp.results && wp.results.NO) || {};
-  const free = no.free || [];
-  const flatrate = no.flatrate || [];
-  const rent = no.rent || [];
+  const free = no.free || [], flatrate = no.flatrate || [], rent = no.rent || [];
   const title = type === 'movie' ? m.title : m.name;
-  const year = type === 'movie' ? (m.release_date || '').slice(0,4) : (m.first_air_date || '').slice(0,4);
+  const year = (type === 'movie' ? m.release_date : m.first_air_date || '').slice(0,4);
   const cast = (cr.cast || []).slice(0,5).map(x => x.name).join(', ');
   const genres = (m.genres || []).map(g => g.name).join(', ');
 
   let extraInfo = '';
   if (type === 'movie') {
-    const director = (cr.crew || []).find(x => x.job === 'Director');
-    if (director) extraInfo += '<div class="section-label">Regissør</div><div class="modal-text">' + director.name + '</div>';
+    const dir = (cr.crew || []).find(x => x.job === 'Director');
+    if (dir) extraInfo += '<div class="section-label">Regissør</div><div class="modal-text">' + dir.name + '</div>';
     if (m.runtime) extraInfo += '<div class="section-label">Spilletid</div><div class="modal-text">' + Math.floor(m.runtime/60) + 't ' + (m.runtime%60) + 'min</div>';
   } else {
     const creators = (m.created_by || []).map(x => x.name).join(', ');
     if (creators) extraInfo += '<div class="section-label">Skaper</div><div class="modal-text">' + creators + '</div>';
     if (m.number_of_seasons) {
-      const status = m.status === 'Ended' ? ' · Avsluttet' : m.status === 'Returning Series' ? ' · Pågående' : '';
-      extraInfo += '<div class="section-label">Sesonger</div><div class="modal-text">' + m.number_of_seasons + ' sesong' + (m.number_of_seasons > 1 ? 'er' : '') + (m.number_of_episodes ? ' · ' + m.number_of_episodes + ' episoder' : '') + status + '</div>';
+      const st = m.status === 'Ended' ? ' · Avsluttet' : m.status === 'Returning Series' ? ' · Pågående' : '';
+      extraInfo += '<div class="section-label">Sesonger</div><div class="modal-text">' + m.number_of_seasons + ' sesong' + (m.number_of_seasons > 1 ? 'er' : '') + (m.number_of_episodes ? ' · ' + m.number_of_episodes + ' episoder' : '') + st + '</div>';
     }
   }
 
   let imdbRating = null, rtRating = null;
-  const imdbId = m.imdb_id || (m.external_ids && m.external_ids.imdb_id);
-  if (imdbId) {
+  if (m.imdb_id) {
     try {
-      const od = await fetch('https://www.omdbapi.com/?i=' + imdbId + '&apikey=' + OMDB_KEY).then(r => r.json());
+      const od = await fetch('https://www.omdbapi.com/?i=' + m.imdb_id + '&apikey=' + OMDB_KEY).then(r => r.json());
       if (od.imdbRating && od.imdbRating !== 'N/A') imdbRating = od.imdbRating;
       const rt = (od.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
       if (rt) rtRating = rt.Value;
@@ -440,20 +471,14 @@ async function openModal(id, type) {
   }
 
   const pillClass = 'score-pill score-pill-' + mediaMode;
-
-  function providerBlock(p, label) {
-    return '<div class="provider">' +
-      (p.logo_path ? '<img src="' + IMG + 'w45' + p.logo_path + '" alt="' + p.provider_name + '"/>' : '') +
+  function provBlock(p, label) {
+    return '<div class="provider">' + (p.logo_path ? '<img src="' + IMG + 'w45' + p.logo_path + '" alt=""/>' : '') +
       p.provider_name + (label ? '<span class="provider-label">' + label + '</span>' : '') + '</div>';
   }
-
-  let providersHtml = '';
-  if (free.length) providersHtml += free.map(p => providerBlock(p, 'Gratis')).join('');
-  if (flatrate.length) {
-    const seen = new Set(free.map(p => p.provider_id));
-    flatrate.filter(p => !seen.has(p.provider_id)).forEach(p => { providersHtml += providerBlock(p, ''); });
-  }
-  if (rent.length) providersHtml += rent.slice(0,4).map(p => providerBlock(p, 'Leie')).join('');
+  let provHtml = free.map(p => provBlock(p,'Gratis')).join('');
+  const seenFree = new Set(free.map(p => p.provider_id));
+  flatrate.filter(p => !seenFree.has(p.provider_id)).forEach(p => { provHtml += provBlock(p,''); });
+  rent.slice(0,4).forEach(p => { provHtml += provBlock(p,'Leie'); });
 
   document.getElementById('modal-inner').innerHTML =
     (m.backdrop_path ? '<img src="' + IMG + 'w780' + m.backdrop_path + '" class="modal-poster" alt=""/>'
@@ -463,14 +488,13 @@ async function openModal(id, type) {
     '<div class="modal-scores">' +
     (imdbRating ? '<span class="' + pillClass + '">★ ' + imdbRating + ' IMDb</span>' : '') +
     (rtRating ? '<span class="score-pill rt">🍅 ' + rtRating + '</span>' : '') +
-    '<span class="' + pillClass + '" style="opacity:0.6">TMDB ' + m.vote_average.toFixed(1) + '</span>' +
-    '</div>' +
+    '<span class="' + pillClass + '" style="opacity:0.6">TMDB ' + m.vote_average.toFixed(1) + '</span></div>' +
     extraInfo +
     (cast ? '<div class="section-label">Skuespillere</div><div class="modal-text">' + cast + '</div>' : '') +
     (genres ? '<div class="section-label">Sjanger</div><div class="modal-text">' + genres + '</div>' : '') +
     (m.overview ? '<div class="section-label">Handling</div><div class="modal-text">' + m.overview + '</div>' : '') +
     '<div class="section-label">Tilgjengelig i Norge</div>' +
-    (providersHtml ? '<div class="providers">' + providersHtml + '</div>' : '<div class="no-providers">Ikke funnet på norske strømmetjenester</div>') +
+    (provHtml ? '<div class="providers">' + provHtml + '</div>' : '<div class="no-providers">Ikke funnet på norske strømmetjenester</div>') +
     (no.link ? '<a href="' + no.link + '" target="_blank" rel="noopener" class="justwatch-link">Se alle tilbud på JustWatch →</a>' : '') +
     '</div>';
 }
