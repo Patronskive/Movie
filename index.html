@@ -284,7 +284,7 @@ function buildDiscoverUrl(minScore, type) {
   const genre = document.getElementById('genre-select').value;
   const decade = document.getElementById('decade-select').value;
   const dateField = type === 'movie' ? 'primary_release_date' : 'first_air_date';
-  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=100&vote_average.gte=' + minScore;
+  let url = '/discover/' + type + '?language=no-NO&sort_by=vote_average.desc&vote_count.gte=10&vote_average.gte=' + minScore;
   if (genre) url += '&with_genres=' + genre;
   if (decade) url += '&' + dateField + '.gte=' + decade + '-01-01&' + dateField + '.lte=' + (parseInt(decade)+9) + '-12-31';
   if (activeLangs.size > 0) url += '&with_original_language=' + Array.from(activeLangs).join('|');
@@ -387,7 +387,7 @@ function render(items, type, append) {
       (m.poster_path ? '<img src="' + IMG + 'w300' + m.poster_path + '" alt="" loading="lazy"/>' : '<div class="no-poster">' + (type === 'movie' ? '🎬' : '📺') + '</div>') +
       '<div class="card-info"><div class="' + scoreClass + '">★ ' + m.vote_average.toFixed(1) + '</div>' +
       '<div class="card-title">' + title + '</div>' +
-      '<div class="card-year">' + year + '</div>' +
+      '<div class="card-year">' + year + (m.vote_count ? ' · ' + m.vote_count + ' stemmer' : '') + '</div>' +
       '<div class="card-providers" id="prov-' + m.id + '"></div></div></div>';
   }).join('');
   if (append) document.getElementById('results').insertAdjacentHTML('beforeend', html);
