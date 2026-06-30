@@ -421,11 +421,14 @@ async function fetchProvidersBatch(items, type) {
 async function openModal(id, type) {
   document.getElementById('overlay').classList.add('open');
   document.getElementById('modal-inner').innerHTML = '<div style="padding:3rem;text-align:center;color:#555">Laster...</div>';
-  const [m, wp, cr] = await Promise.all([
+  const calls = [
     tmdb('/' + type + '/' + id + '?language=no-NO'),
     tmdb('/' + type + '/' + id + '/watch/providers'),
     tmdb('/' + type + '/' + id + '/credits?language=no-NO'),
-  ]);
+  ];
+  if (type === 'tv') calls.push(tmdb('/tv/' + id + '/external_ids'));
+  const [m, wp, cr, ext] = await Promise.all(calls);
+  const imdbIdResolved = type === 'movie' ? m.imdb_id : (ext && ext.imdb_id);
   const no = (wp.results && wp.results.NO) || {};
   const free = no.free || [], flatrate = no.flatrate || [], rent = no.rent || [];
   const title = type === 'movie' ? m.title : m.name;
@@ -448,9 +451,9 @@ async function openModal(id, type) {
   }
 
   let imdbRating = null, rtRating = null;
-  if (m.imdb_id) {
+  if (imdbIdResolved) {
     try {
-      const od = await fetch('https://www.omdbapi.com/?i=' + m.imdb_id + '&apikey=' + OMDB_KEY).then(r => r.json());
+      const od = await fetch('https://www.omdbapi.com/?i=' + imdbIdResolved + '&apikey=' + OMDB_KEY).then(r => r.json());
       if (od.imdbRating && od.imdbRating !== 'N/A') imdbRating = od.imdbRating;
       const rt = (od.Ratings || []).find(r => r.Source === 'Rotten Tomatoes');
       if (rt) rtRating = rt.Value;
